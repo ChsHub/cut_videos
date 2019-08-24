@@ -59,7 +59,6 @@ class Window(Frame):
     _path = None
     _ffmpeg_path = get_absolute_path('lib\\ffmpeg\\bin\\ffmpeg.exe')
 
-
     def __init__(self):
 
         if not exists(self._ffmpeg_path):
@@ -82,7 +81,6 @@ class Window(Frame):
 
         #  Create Input fields
         self._start_input = SimpleInput(panel, label='START', initial='00:00:00.0')
-
         self._end_input = SimpleInput(panel, label='END', initial='00:00:00.0')
         self._scale_input = SimpleInput(panel, label='Width:Height', initial='-1:-1')
         self._webm_input = SimpleInput(panel, label='WEBM Quality', initial='33')
@@ -90,12 +88,10 @@ class Window(Frame):
 
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-        self._check_webm = CheckBox(panel, label="WEBM")
-        self._check_webm.SetFont(font)
-        self._check_mp4 = CheckBox(panel, label="MP4")
-        self._check_mp4.SetFont(font)
-        self._check_frames = CheckBox(panel, label="FRAMES")
-        self._check_frames.SetFont(font)
+        self.checks = []
+        self.checks.append(CheckBox(panel, label="WEBM"))
+        self.checks.append(CheckBox(panel, label="MP4"))
+        self.checks.append(CheckBox(panel, label="FRAMES"))
         self._check_gif = CheckBox(panel, label="gif")
         self._check_gif.SetFont(font)
 
@@ -106,8 +102,6 @@ class Window(Frame):
                                                title='Audio codec')
 
         # Add inputs to sizer
-
-
         sizer.Add(self._start_input, 1, EXPAND)
         sizer.Add(self._end_input, 1, EXPAND)
         sizer.Add(self._scale_input, 1, EXPAND)
@@ -115,11 +109,10 @@ class Window(Frame):
         sizer.Add(self._framerate_input, 1, EXPAND)
 
         sizer.Add(self._audio_select, 1, EXPAND)
-        sizer.Add(self._check_webm, 1, EXPAND)
-        sizer.Add(self._check_mp4, 1, EXPAND)
-        sizer.Add(self._check_frames, 1, EXPAND)
+        for check in self.checks:
+            check.SetFont(font)
+            sizer.Add(check, 1, EXPAND)
         sizer.Add(self._check_gif, 1, EXPAND)
-
         sizer.Add(self._progress_bar, 0, EXPAND)
 
         # Add Button

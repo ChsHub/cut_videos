@@ -6,7 +6,7 @@ from subprocess import Popen, PIPE
 from tempfile import TemporaryDirectory
 from threading import Thread
 
-from os.path import join
+from os.path import join, splitext, split
 from timerpy import Timer
 from utility.os_interface import exists, make_directory
 from utility.path_str import get_clean_path
@@ -70,6 +70,13 @@ class Task(Thread):
         time = ''
         if self._gui._end_input.get_value() != '00:00:00.0' and command:
             time = '-sn -ss ' + self._gui._start_input.get_value() + ' -to ' + self._gui._end_input.get_value()
+        if not command:
+            # Output directory for frames
+            directory, _ = split(new_file)
+            if exists(directory):
+                info('Exists')
+                return
+            make_directory(directory)
 
         # Resolve selected audio codec
         audio = self._gui._audio_options[self._gui._audio_select.get_selection()]
@@ -77,7 +84,7 @@ class Task(Thread):
         command = ['"' + self._gui._ffmpeg_path + '"',
                    input_framerate, '-i', '"' + file + '"',
                    time, audio, command,
-                   '"' + new_file + '"']
+                   '"' + get_clean_path(new_file) + '"']
         command = ' '.join(command)
         info(command)
 
@@ -97,11 +104,12 @@ class Task(Thread):
 
             data = findall(pattern, str(line))
             if data:
+                print(str(line))
                 line = b''
                 strategy(data[0])
 
                 # If FPS found, search frame numbers
-                pattern = 'frame=\s*(\d+)\s+' # Frame pattern
+                pattern = 'frame=\s*(\d+)\s+'  # Frame pattern
                 strategy = self._set_current_frames
                 self._gui._progress_bar.Update()
 
@@ -120,40 +128,24 @@ class Task(Thread):
 
     def _convert(self, i_file, o_file, input_framerate=''):
 
-        if self._gui._check_webm.GetValue():
-            # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
-            self._run_command(file=i_file,
-                              command=' -lavfi "scale=' + self._gui._scale_input.get_value() +
-                                      '" -c:v libvpx-vp9 -speed 0 -crf ' + self._gui._webm_input.get_value() +
-                                      ' -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
-                              new_file=o_file + ".webm",
-                              input_framerate=input_framerate)
-
-        if self._gui._check_mp4.GetValue():
-            self._run_command(file=i_file,
-                              command='-async 1 -lavfi "scale=' + self._gui._scale_input.get_value() + '"',
-                              new_file=o_file + ".mp4",
-                              input_framerate=input_framerate)
-
-        if self._gui._check_frames.GetValue():
-            self.convert_frames(o_file, i_file, input_framerate=input_framerate)
+        for i, (command, suffix) in enumerate([(' -lavfi "scale=' + self._gui._scale_input.get_value() +
+                                                '" -c:v libvpx-vp9 -speed 0 -crf ' + self._gui._webm_input.get_value() +
+                                                ' -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+                                                ".webm"),
+                                               ('-async 1 -lavfi "scale=' + self._gui._scale_input.get_value() + '"',
+                                                ".mp4"),
+                                               ('', '/%03d.png')]):
+            if self._gui.checks[i].GetValue():
+                # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
+                self._run_command(file=i_file,
+                                  command=command,
+                                  new_file=o_file + suffix,
+                                  input_framerate=input_framerate)
 
         if self._gui._check_gif.GetValue():
             self.convert_gif(o_file, i_file, input_framerate=input_framerate)
 
         info('\nDONE')
-
-    def convert_frames(self, o_file, i_file, input_framerate=''):
-        # o_file is output directory for frames
-        if exists(o_file):
-            info('Exists')
-            return
-        make_directory(o_file)
-
-        self._run_command(file=i_file,
-                          command='',
-                          new_file=get_clean_path(join(o_file, '%03d.png')),
-                          input_framerate=input_framerate)
 
     def convert_gif(self, o_file, i_file, input_framerate=''):
 
