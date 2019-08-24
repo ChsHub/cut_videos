@@ -74,7 +74,7 @@ class Window(Frame):
         panel = Panel(self, EXPAND)
         sizer = BoxSizer(VERTICAL)
         sizer.Add(FileInput(panel, text_button="Open File", callback=self._set_file,
-                            file_type="*.mkv;*.mp4;*.webm;*.avi;*.bmp;*.gif;*.png;*.jpg",
+                            file_type="*.mkv;*.mp4;*.webm;*.avi;*.bmp;*.gif;*.png;*.jpg;",
                             text_title="OPEN", text_open_file="File"), 1, EXPAND)
 
         self._progress_bar = Gauge(panel, style=GA_HORIZONTAL)

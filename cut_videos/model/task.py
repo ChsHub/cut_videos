@@ -32,13 +32,13 @@ class Task(Thread):
         # Load frames
         if len(frames) > 1:
             with TemporaryDirectory(prefix=self._gui._path + '/') as temp_path:
-                self._gui.move_files(temp_path, frames, reverse=False)
+                self.move_files(temp_path, frames, reverse=False)
 
                 # Convert the frames
                 input_framerate = ' -framerate ' + self._gui._framerate_input.get_value()
-                self._gui._convert(i_file=join(temp_path, '%3d' + get_file_type(frames[0])),
+                self._convert(i_file=join(temp_path, '%3d' + get_file_type(frames[0])),
                                    o_file=self._gui._path, input_framerate=input_framerate)
-                self._gui.move_files(temp_path, frames, reverse=True)
+                self.move_files(temp_path, frames, reverse=True)
         # no else
 
         # Load videos
