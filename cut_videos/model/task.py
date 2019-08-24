@@ -14,7 +14,6 @@ from utility.utilities import get_file_type, remove_file_type, is_file_type
 
 
 class Task(Thread):
-    _frame_format = '.png'
 
     def __init__(self, gui):
         Thread.__init__(self, daemon=True)
@@ -50,7 +49,7 @@ class Task(Thread):
                                                       self._gui._end_input.get_value()).replace(":", "-")
                               + '_' + remove_file_type(i_file))
                 # Convert the video
-                self._convert(join(self._gui._path, i_file), o_file, time)
+                self._convert(join(self._gui._path, i_file), o_file)
         # no else
 
     def _set_current_frames(self, value):
@@ -66,8 +65,10 @@ class Task(Thread):
         if exists(new_file):
             info('ALREADY EXISTS: ' + new_file)
             return
+
         # Get time settings
-        if self._gui._end_input.get_value() != '00:00:00.0':
+        time = ''
+        if self._gui._end_input.get_value() != '00:00:00.0' and command:
             time = '-sn -ss ' + self._gui._start_input.get_value() + ' -to ' + self._gui._end_input.get_value()
 
         # Resolve selected audio codec
@@ -80,7 +81,7 @@ class Task(Thread):
         command = ' '.join(command)
         info(command)
 
-        info('CONVERT')
+        # CONVERT
         process = Popen(command, stderr=PIPE)
 
         # READ OUTPUT
@@ -100,7 +101,7 @@ class Task(Thread):
                 strategy(data[0])
 
                 # If FPS found, search frame numbers
-                pattern = 'frame=\s*(\d+)\s+'
+                pattern = 'frame=\s*(\d+)\s+' # Frame pattern
                 strategy = self._set_current_frames
                 self._gui._progress_bar.Update()
 
@@ -120,39 +121,38 @@ class Task(Thread):
     def _convert(self, i_file, o_file, input_framerate=''):
 
         if self._gui._check_webm.GetValue():
-            self.convert_webm(o_file, i_file, input_framerate=input_framerate)
+            # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
+            self._run_command(file=i_file,
+                              command=' -lavfi "scale=' + self._gui._scale_input.get_value() +
+                                      '" -c:v libvpx-vp9 -speed 0 -crf ' + self._gui._webm_input.get_value() +
+                                      ' -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+                              new_file=o_file + ".webm",
+                              input_framerate=input_framerate)
 
         if self._gui._check_mp4.GetValue():
-            self.convert_mp4(o_file, i_file, input_framerate=input_framerate)
+            self._run_command(file=i_file,
+                              command='-async 1 -lavfi "scale=' + self._gui._scale_input.get_value() + '"',
+                              new_file=o_file + ".mp4",
+                              input_framerate=input_framerate)
 
         if self._gui._check_frames.GetValue():
-            with Timer('FRAMES', log_function=info):
-                self.convert_frames(o_file, i_file, input_framerate=input_framerate)
+            self.convert_frames(o_file, i_file, input_framerate=input_framerate)
 
         if self._gui._check_gif.GetValue():
-            with Timer('GIF', log_function=info):
-                self.convert_gif(o_file, i_file, input_framerate=input_framerate)
+            self.convert_gif(o_file, i_file, input_framerate=input_framerate)
 
         info('\nDONE')
 
-    def convert_webm(self, o_file, i_file, input_framerate=''):
-        o_file += ".webm"
-        # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
-        command = ' -lavfi "scale=' + self._gui._scale_input.get_value() + '" -c:v libvpx-vp9 -speed 0 -crf ' + self._gui._webm_input.get_value() + \
-                  ' -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 ' \
-                  '-auto-alt-ref 1 -lag-in-frames 25'
+    def convert_frames(self, o_file, i_file, input_framerate=''):
+        # o_file is output directory for frames
+        if exists(o_file):
+            info('Exists')
+            return
+        make_directory(o_file)
 
         self._run_command(file=i_file,
-                          command=command,
-                          new_file=o_file,
-                          input_framerate=input_framerate)
-
-    def convert_mp4(self, o_file, i_file, input_framerate=''):
-        o_file += ".mp4"
-
-        self._run_command(file=i_file,
-                          command='-async 1 -lavfi "scale=' + self._gui._scale_input.get_value() + '"',
-                          new_file=o_file,
+                          command='',
+                          new_file=get_clean_path(join(o_file, '%03d.png')),
                           input_framerate=input_framerate)
 
     def convert_gif(self, o_file, i_file, input_framerate=''):
@@ -169,29 +169,11 @@ class Task(Thread):
                 info('No Palette')
                 return
 
-            self._run_command(file=i_file + '" -i "' + palette,
-                              command=' -lavfi "scale=' + self._gui._scale_input.get_value() + ':flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"',
-                              new_file=o_file + "_bayer.gif",
-                              input_framerate=input_framerate)
-
-            self._run_command(file=i_file + '" -i "' + palette,
-                              command=' -lavfi "scale=' + self._gui._scale_input.get_value() + ':flags=lanczos,paletteuse=dither=none"',
-                              new_file=o_file + "_none.gif",
-                              input_framerate=input_framerate)
-
-            self._run_command(file=i_file,
-                              command=' -lavfi "scale=' + self._gui._scale_input.get_value() + '"',
-                              new_file=o_file + '_no_pal.gif',
-                              input_framerate=input_framerate)
-
-    def convert_frames(self, o_file, i_file, input_framerate=''):
-        # o_file is output directory for frames
-        if exists(o_file):
-            info('Exists')
-            return
-        make_directory(o_file)
-        o_file = get_clean_path(join(o_file, "%03d" + self._frame_format))
-        self._run_command(file=i_file,
-                          command='',
-                          new_file=o_file,
-                          input_framerate=input_framerate)
+            for mode, suffix in [
+                (':flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle', "_bayer.gif"),
+                (':flags=lanczos,paletteuse=dither=none', "_default.gif"),
+                ('', '_no_pal.gif')]:
+                self._run_command(file=i_file + '" -i "' + palette,
+                                  command=' -lavfi "scale=%s%s"' % (self._gui._scale_input.get_value(), mode),
+                                  new_file=o_file + suffix,
+                                  input_framerate=input_framerate)
