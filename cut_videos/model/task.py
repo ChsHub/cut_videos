@@ -58,6 +58,7 @@ class Task(Thread):
 
     def _set_total_frames(self, value):
         self.total_frames *= float(value)
+        self._gui._progress_bar.SetValue(0)
         self._gui._progress_bar.SetRange(int(self.total_frames))
 
     def _run_command(self, file, command, new_file, input_framerate=''):
@@ -68,8 +69,9 @@ class Task(Thread):
 
         # Get time settings
         time = ''
-        if self._gui._end_input.get_value() != '00:00:00.0' and command:
+        if self._gui._end_input.get_value() != '00:00:00.0':
             time = '-sn -ss ' + self._gui._start_input.get_value() + ' -to ' + self._gui._end_input.get_value()
+
         if not command:
             # Output directory for frames
             directory, _ = split(new_file)
