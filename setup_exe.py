@@ -2,7 +2,7 @@ from subprocess import Popen
 from utility.os_interface import read_file_data, write_file_data, exists
 from utility.setup_lib import get_tuples
 
-text_view_title = 'reaction videos'
+text_view_title = 'cut videos'
 icon_path = 'icon.ico'
 
 if not exists(text_view_title + ".spec"):

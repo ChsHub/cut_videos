@@ -18,7 +18,6 @@ class Task(Thread):
     def __init__(self, gui):
         Thread.__init__(self, daemon=True)
         self._gui = gui
-
         # Get the length of the new video in seconds
         FMT = '%H:%M:%S.%f'
         self.total_frames = date.strptime(self._gui._end_input.get_value(), FMT) - date.strptime(
@@ -37,7 +36,7 @@ class Task(Thread):
                 # Convert the frames
                 input_framerate = ' -framerate ' + self._gui._framerate_input.get_value()
                 self._convert(i_file=join(temp_path, '%3d' + get_file_type(frames[0])),
-                                   o_file=self._gui._path, input_framerate=input_framerate)
+                              o_file=self._gui._path, input_framerate=input_framerate)
                 self.move_files(temp_path, frames, reverse=True)
         # no else
 
@@ -62,7 +61,7 @@ class Task(Thread):
         self._gui._progress_bar.SetRange(int(self.total_frames))
 
     def _run_command(self, file, command, new_file, input_framerate=''):
-
+        # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
         if exists(new_file):
             info('ALREADY EXISTS: ' + new_file)
             return
@@ -72,8 +71,13 @@ class Task(Thread):
         if self._gui._end_input.get_value() != '00:00:00.0':
             time = '-sn -ss ' + self._gui._start_input.get_value() + ' -to ' + self._gui._end_input.get_value()
 
+        # Insert selected values into command
+        for value in (self._gui._scale_input.get_value(), self._gui._webm_input.get_value()):
+            if '%s' in command:
+                command %= value
+
+        # Output directory for frames
         if not command:
-            # Output directory for frames
             directory, _ = split(new_file)
             if exists(directory):
                 info('Exists')
@@ -91,31 +95,32 @@ class Task(Thread):
         info(command)
 
         # CONVERT
-        process = Popen(command, stderr=PIPE)
+        with Timer('CONVERT'):
+            process = Popen(command, shell=False, stderr=PIPE)
 
-        # READ OUTPUT
-        symbol = ' '
-        line = b''
+            # READ OUTPUT
+            symbol = ' '
+            line = b''
 
-        pattern = '\s(\d+\S+)\sfps'  # FPS pattern
-        strategy = self._set_total_frames
+            pattern = '\s(\d+\S+)\sfps'  # FPS pattern
+            strategy = self._set_total_frames
 
-        while symbol:
-            symbol = process.stderr.read(90)
-            line += symbol
+            while symbol:
+                symbol = process.stderr.read(92)
+                line += symbol
 
-            data = findall(pattern, str(line))
-            if data:
-                print(str(line))
-                line = b''
-                strategy(data[0])
+                data = findall(pattern, str(line))
+                if data:
+                    info(str(line))
+                    line = b''
+                    strategy(data[0])
 
-                # If FPS found, search frame numbers
-                pattern = 'frame=\s*(\d+)\s+'  # Frame pattern
-                strategy = self._set_current_frames
-                self._gui._progress_bar.Update()
+                    # If FPS found, search frame numbers
+                    pattern = 'frame=\s*(\d+)\s+'  # Frame pattern
+                    strategy = self._set_current_frames
+                    self._gui._progress_bar.Update()
 
-        process.communicate()
+            process.communicate()
 
     def move_files(self, temp_path, files, reverse):
         digits = 3
@@ -130,22 +135,14 @@ class Task(Thread):
 
     def _convert(self, i_file, o_file, input_framerate=''):
 
-        for i, (command, suffix) in enumerate([(' -lavfi "scale=' + self._gui._scale_input.get_value() +
-                                                '" -c:v libvpx-vp9 -speed 0 -crf ' + self._gui._webm_input.get_value() +
-                                                ' -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
-                                                ".webm"),
-                                               ('-async 1 -lavfi "scale=' + self._gui._scale_input.get_value() + '"',
-                                                ".mp4"),
-                                               ('', '/%03d.png')]):
-            if self._gui.checks[i].GetValue():
-                # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
-                self._run_command(file=i_file,
-                                  command=command,
-                                  new_file=o_file + suffix,
-                                  input_framerate=input_framerate)
+        command, suffix  = self._gui._video_options[self._gui._video_select.get_selection()]
+        self._run_command(file=i_file,
+                          command=command,
+                          new_file=o_file + suffix,
+                          input_framerate=input_framerate)
 
-        if self._gui._check_gif.GetValue():
-            self.convert_gif(o_file, i_file, input_framerate=input_framerate)
+        #if self._gui._check_gif.GetValue():
+        #     self.convert_gif(o_file, i_file, input_framerate=input_framerate)
 
         info('\nDONE')
 

@@ -39,14 +39,12 @@ class SimpleInput(Panel):
 
         sizer = BoxSizer(HORIZONTAL)
         self._text_input = TextCtrl(self)
-
-        font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-        self._text_input.SetFont(font)
+        self._text_input.SetFont(Font(40, MODERN, NORMAL, NORMAL, False, u'Consolas'))
         self._text_input.SetValue(initial)
         sizer.Add(self._text_input, 1, EXPAND)
 
         text = StaticText(self, label=label)
-        text.SetFont(font)
+        text.SetFont(Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas'))
         sizer.Add(text, 1, EXPAND)
         self.SetSizer(sizer)
 
@@ -60,7 +58,6 @@ class Window(Frame):
     _ffmpeg_path = get_absolute_path('lib\\ffmpeg\\bin\\ffmpeg.exe')
 
     def __init__(self):
-
         if not exists(self._ffmpeg_path):
             info('ffmpeg not found')
             raise FileNotFoundError
@@ -88,12 +85,6 @@ class Window(Frame):
 
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-        self.checks = []
-        self.checks.append(CheckBox(panel, label="WEBM"))
-        self.checks.append(CheckBox(panel, label="MP4"))
-        self.checks.append(CheckBox(panel, label="FRAMES"))
-        self._check_gif = CheckBox(panel, label="gif")
-        self._check_gif.SetFont(font)
 
         self._audio_options = {'Native format': '-c:a copy', 'no audio': '-an',
                                'opus': '-c:a libopus -vbr on -b:a 128k'}
@@ -101,6 +92,15 @@ class Window(Frame):
                                                callback=None,
                                                title='Audio codec')
 
+        self._video_options = {'WEBM': (
+        ' -lavfi "scale=%s" -c:v libvpx-vp9 -speed 0 -crf %s -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+        ".webm"), 'MP4': ('-async 1 -lavfi "scale=%s"', ".mp4"), 'FRAMES': '', 'gif': ('', '/%03d.png')}
+        self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
+                                               callback=None,
+                                               title='Video format')
+
+        sizer.Add(self._video_select, 1, EXPAND)
+        sizer.Add(self._audio_select, 1, EXPAND)
         # Add inputs to sizer
         sizer.Add(self._start_input, 1, EXPAND)
         sizer.Add(self._end_input, 1, EXPAND)
@@ -108,11 +108,6 @@ class Window(Frame):
         sizer.Add(self._webm_input, 1, EXPAND)
         sizer.Add(self._framerate_input, 1, EXPAND)
 
-        sizer.Add(self._audio_select, 1, EXPAND)
-        for check in self.checks:
-            check.SetFont(font)
-            sizer.Add(check, 1, EXPAND)
-        sizer.Add(self._check_gif, 1, EXPAND)
         sizer.Add(self._progress_bar, 0, EXPAND)
 
         # Add Button
