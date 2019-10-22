@@ -2,7 +2,7 @@ from datetime import datetime as date
 from logging import info
 from re import findall
 from shutil import move
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from tempfile import TemporaryDirectory
 from threading import Thread
 
@@ -72,9 +72,10 @@ class Task(Thread):
             time = '-sn -ss ' + self._gui._start_input.get_value() + ' -to ' + self._gui._end_input.get_value()
 
         # Insert selected values into command
-        for value in (self._gui._scale_input.get_value(), self._gui._webm_input.get_value()):
-            if '%s' in command:
-                command %= value
+        command = command.replace('%scale', self._gui._scale_input.get_value())
+        command = command.replace('%crf', self._gui._webm_input.get_value())
+        _, ext = splitext(file)
+        new_file = new_file.replace('%ext', ext)
 
         # Output directory for frames
         if not command:
@@ -96,17 +97,16 @@ class Task(Thread):
 
         # CONVERT
         with Timer('CONVERT'):
-            process = Popen(command, shell=False, stderr=PIPE)
+            process = Popen(command, shell=False, stdout=PIPE, stderr=STDOUT)
 
             # READ OUTPUT
             symbol = ' '
             line = b''
-
             pattern = '\s(\d+\S+)\sfps'  # FPS pattern
             strategy = self._set_total_frames
 
             while symbol:
-                symbol = process.stderr.read(92)
+                symbol = process.stdout.read(92)
                 line += symbol
 
                 data = findall(pattern, str(line))
@@ -135,14 +135,14 @@ class Task(Thread):
 
     def _convert(self, i_file, o_file, input_framerate=''):
 
-        command, suffix  = self._gui._video_options[self._gui._video_select.get_selection()]
-        self._run_command(file=i_file,
-                          command=command,
-                          new_file=o_file + suffix,
-                          input_framerate=input_framerate)
-
-        #if self._gui._check_gif.GetValue():
-        #     self.convert_gif(o_file, i_file, input_framerate=input_framerate)
+        if self._gui._video_select.get_selection() == 'gif':
+            self.convert_gif(o_file, i_file, input_framerate=input_framerate)
+        else:
+            command, suffix = self._gui._video_options[self._gui._video_select.get_selection()]
+            self._run_command(file=i_file,
+                              command=command,
+                              new_file=o_file + suffix,
+                              input_framerate=input_framerate)
 
         info('\nDONE')
 

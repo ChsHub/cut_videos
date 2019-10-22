@@ -93,8 +93,8 @@ class Window(Frame):
                                                title='Audio codec')
 
         self._video_options = {'WEBM': (
-        ' -lavfi "scale=%s" -c:v libvpx-vp9 -speed 0 -crf %s -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
-        ".webm"), 'MP4': ('-async 1 -lavfi "scale=%s"', ".mp4"), 'FRAMES': '', 'gif': ('', '/%03d.png')}
+        ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+        ".webm"), 'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"), 'FRAMES': ('', '/%03d.png'), 'gif': '', 'COPY': ('-c copy', '%ext')}
         self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
                                                callback=None,
                                                title='Video format')
