@@ -1,9 +1,8 @@
 from logging import info
 
-from utility.logger import Logger
 from utility.os_interface import exists, get_absolute_path
 from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, Frame, \
-    ID_ANY, App, EXPAND, HORIZONTAL, EVT_CLOSE, CheckBox, Icon, Bitmap, BITMAP_TYPE_ANY, NORMAL, MODERN, TextCtrl, \
+    ID_ANY, EXPAND, HORIZONTAL, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, NORMAL, MODERN, TextCtrl, \
     GA_HORIZONTAL, Gauge
 from wxwidgets import FileInput, SimpleButton
 
@@ -71,7 +70,7 @@ class Window(Frame):
         panel = Panel(self, EXPAND)
         sizer = BoxSizer(VERTICAL)
         sizer.Add(FileInput(panel, text_button="Open File", callback=self._set_file,
-                            file_type="*.mkv;*.mp4;*.webm;*.avi;*.bmp;*.gif;*.png;*.jpg;",
+                            file_type="*.mkv;*.mp4;*.webm;*.avi;*.bmp;*.wmv;*.gif;*.png;*.jpg;",
                             text_title="OPEN", text_open_file="File"), 1, EXPAND)
 
         self._progress_bar = Gauge(panel, style=GA_HORIZONTAL)
@@ -93,8 +92,9 @@ class Window(Frame):
                                                title='Audio codec')
 
         self._video_options = {'WEBM': (
-        ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
-        ".webm"), 'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"), 'FRAMES': ('', '/%03d.png'), 'gif': '', 'COPY': ('-c copy', '%ext')}
+            ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+            ".webm"), 'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"), 'FRAMES': ('', '/%03d.png'), 'gif': '',
+            'COPY': ('-c copy', '%ext')}
         self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
                                                callback=None,
                                                title='Video format')
@@ -120,11 +120,3 @@ class Window(Frame):
 
     def _submit_task(self, event):
         Task(self).start()
-
-
-if __name__ == "__main__":
-    with Logger():
-        app = App(False)
-        frame = Window()
-        frame.Show()
-        app.MainLoop()
