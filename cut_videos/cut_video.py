@@ -20,8 +20,8 @@ class StandardSelection(Panel):
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
         text.SetFont(font)
         self.selection.SetFont(font)
-        # self.selection.SetFont(font)
         self.selection.SetValue(options[0])
+
         if callback:
             self.selection.Bind(EVT_TEXT, lambda x: callback(self.selection.GetValue()))
         sizer.Add(self.selection, 1, EXPAND)
@@ -52,15 +52,8 @@ class SimpleInput(Panel):
 
 
 class Window(Frame):
-    _files = []
-    _path = None
-    _ffmpeg_path = get_absolute_path('lib\\ffmpeg\\bin\\ffmpeg.exe')
 
     def __init__(self):
-        if not exists(self._ffmpeg_path):
-            info('ffmpeg not found')
-            raise FileNotFoundError
-
         # init window
         Frame.__init__(self, None, ID_ANY, "CUT", size=(800, 800))
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
@@ -69,6 +62,8 @@ class Window(Frame):
         self.SetIcon(loc)
         panel = Panel(self, EXPAND)
         sizer = BoxSizer(VERTICAL)
+
+        panel.SetSizer(sizer)
         sizer.Add(FileInput(panel, text_button="Open File", callback=self._set_file,
                             file_type="*.mkv;*.mp4;*.webm;*.avi;*.bmp;*.wmv;*.gif;*.png;*.jpg;",
                             text_title="OPEN", text_open_file="File"), 1, EXPAND)
@@ -83,8 +78,6 @@ class Window(Frame):
         self._framerate_input = SimpleInput(panel, label='INPUT FRAMES FRAMERATE', initial='24')
 
         # Create check inputs
-        font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-
         self._audio_options = {'Native format': '-c:a copy', 'no audio': '-an',
                                'opus': '-c:a libopus -vbr on -b:a 128k'}
         self._audio_select = StandardSelection(parent=panel, options=list(self._audio_options.keys()),
@@ -99,24 +92,19 @@ class Window(Frame):
                                                callback=None,
                                                title='Video format')
 
-        sizer.Add(self._video_select, 1, EXPAND)
-        sizer.Add(self._audio_select, 1, EXPAND)
-        # Add inputs to sizer
-        sizer.Add(self._start_input, 1, EXPAND)
-        sizer.Add(self._end_input, 1, EXPAND)
-        sizer.Add(self._scale_input, 1, EXPAND)
-        sizer.Add(self._webm_input, 1, EXPAND)
-        sizer.Add(self._framerate_input, 1, EXPAND)
-
+        sizer.Add(self._video_select, 0, EXPAND)
+        sizer.Add(self._audio_select, 0, EXPAND)
+        sizer.Add(self._start_input, 0, EXPAND)
+        sizer.Add(self._end_input, 0, EXPAND)
+        sizer.Add(self._scale_input, 0, EXPAND)
+        sizer.Add(self._webm_input, 0, EXPAND)
+        sizer.Add(self._framerate_input, 0, EXPAND)
         sizer.Add(self._progress_bar, 0, EXPAND)
-
-        # Add Button
         sizer.Add(SimpleButton(panel, text_button='CUT', callback=self._submit_task), 1, EXPAND)
-        panel.SetSizer(sizer)
 
     def _set_file(self, path, files):
-        self._path = path
-        self._files = files
+        self._task = Task(self, path, files)
 
     def _submit_task(self, event):
-        Task(self).start()
+        self._task.set_time(self._start_input.get_value(), self._end_input.get_value())
+        self._task.start()
