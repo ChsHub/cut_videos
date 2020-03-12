@@ -1,5 +1,5 @@
 from datetime import datetime as date
-from logging import info
+from logging import info, error
 from re import findall
 from shutil import move
 from subprocess import Popen, PIPE, STDOUT
@@ -157,7 +157,7 @@ class Task(Thread):
                                   new_file=palette,
                                   input_framerate=input_framerate)
             if not exists(palette):
-                info('No Palette')
+                error('No Palette')
                 return
 
             for mode, suffix in [
