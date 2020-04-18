@@ -1,4 +1,4 @@
-from utility.logger import Logger
+from logger_default import Logger
 from wx import App
 
 from cut_videos.cut_video import Window

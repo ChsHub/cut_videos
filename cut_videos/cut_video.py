@@ -1,6 +1,6 @@
 from logging import info
+from os.path import abspath, exists
 
-from utility.os_interface import exists, get_absolute_path
 from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, Frame, \
     ID_ANY, EXPAND, HORIZONTAL, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, NORMAL, MODERN, TextCtrl, \
     GA_HORIZONTAL, Gauge
@@ -52,12 +52,13 @@ class SimpleInput(Panel):
 
 
 class Window(Frame):
-    _files = []
-    _path = None
-    _ffmpeg_path = get_absolute_path('lib\\ffmpeg\\bin\\ffmpeg.exe')
-
     def __init__(self):
-        if not exists(self._ffmpeg_path):
+        self._files = []
+        self._path = None
+        self._ffmpeg_path = abspath('lib\\ffmpeg\\bin\\ffmpeg.exe')
+        self._ffprobe_path = abspath('lib\\ffmpeg\\bin\\ffprobe.exe')
+
+        if not exists(self._ffmpeg_path) or not exists(self._ffprobe_path):
             info('ffmpeg not found')
             raise FileNotFoundError
 
@@ -79,8 +80,8 @@ class Window(Frame):
         self._start_input = SimpleInput(panel, label='START', initial='00:00:00.0')
         self._end_input = SimpleInput(panel, label='END', initial='00:00:00.0')
         self._scale_input = SimpleInput(panel, label='Width:Height', initial='-1:-1')
-        self._webm_input = SimpleInput(panel, label='WEBM Quality', initial='33')
-        self._framerate_input = SimpleInput(panel, label='INPUT FRAMES FRAMERATE', initial='24')
+        self._webm_input = SimpleInput(panel, label='WEBM Quality', initial='36')
+        self._framerate_input = SimpleInput(panel, label='INPUT FRAMES FRAMERATE', initial='')
 
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
@@ -91,9 +92,11 @@ class Window(Frame):
                                                callback=None,
                                                title='Audio codec')
 
-        self._video_options = {'WEBM': (
-            ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
-            ".webm"), 'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"), 'FRAMES': ('', '/%03d.png'), 'gif': '',
+        self._video_options = {
+            'WEBM': (
+                ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+                ".webm"),
+            'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"), 'FRAMES': ('', '/%03d.png'), 'gif': '',
             'COPY': ('-c copy', '%ext')}
         self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
                                                callback=None,
