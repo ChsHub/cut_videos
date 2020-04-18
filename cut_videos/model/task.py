@@ -1,5 +1,5 @@
 from datetime import datetime as date
-from logging import info, error
+from logging import info
 from os import mkdir
 from os.path import join, splitext, split, exists
 from re import findall
@@ -10,7 +10,7 @@ from threading import Thread
 
 from timerpy import Timer
 from utility.path_str import get_clean_path
-from utility.utilities import get_file_type, remove_file_type, is_file_type
+from utility.utilities import get_file_type, is_file_type
 
 
 class Task(Thread):
@@ -43,18 +43,20 @@ class Task(Thread):
                 input_framerate = ' -r ' + input_framerate
 
             for i_file in videos:
-                # Get output file name
                 o_file = join(self._gui._path, '_' + (self._gui._start_input.get_value() + '_' +
                                                       self._gui._end_input.get_value()).replace(":", "-")
-                              + '_' + remove_file_type(i_file))
+                              + '_' + i_file)
+                o_file, _ = splitext(o_file)
+                i_file = join(self._gui._path, i_file)
                 # Convert the video
                 self._set_total_frames(self._get_duration(i_file) * self._get_video_fps(i_file))
-                self._convert(join(self._gui._path, i_file), o_file, input_framerate=(1, input_framerate))
+                self._convert(i_file, o_file, input_framerate=(1, input_framerate))
         # no else
 
     def _set_current_frames(self, value):
         frame_nr = int(value)
         self._gui._progress_bar.SetValue(frame_nr)
+        self._gui._progress_bar.Update()
 
     def _set_total_frames(self, total_frames):
         self._gui._progress_bar.SetValue(0)
@@ -68,6 +70,15 @@ class Task(Thread):
             if self._gui._end_input.get_value() != '00:00:00.0':
                 time += ' -to ' + self._gui._end_input.get_value()
         return time
+
+    def _get_audio_command(self, file):
+        audio_selection = self._gui._audio_select.get_selection()
+        info('SELECTED: ' + audio_selection)
+        audio_codec = self._get_audio_codec(file)
+        info('INPUT: ' + audio_codec)
+        if audio_codec == audio_selection:
+            return list(self._gui._audio_options.values())[-1]  # DON'T convert if selected codec is input codec
+        return self._gui._audio_options[audio_selection]
 
     def _run_command(self, file, command, new_file, input_framerate: tuple):
         # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
@@ -93,11 +104,11 @@ class Task(Thread):
             mkdir(directory)
 
         # Resolve selected audio codec
-        audio = self._gui._audio_options[self._gui._audio_select.get_selection()]
+        audio_command = self._get_audio_command(file)
 
         command = ['"%s"' % self._gui._ffmpeg_path,
                    '-i "%s"' % file,
-                   time, audio, command,
+                   time, audio_command, command,
                    '"%s"' % get_clean_path(new_file)]
         if input_framerate:
             index, input_framerate = input_framerate
@@ -113,23 +124,15 @@ class Task(Thread):
     def _monitor_process(self, process):
         symbol = ' '
         line = b''
-        pattern = '\s(\d+\S+)\sfps'  # FPS pattern
-        strategy = self._set_total_frames
-
         while symbol:
             symbol = process.stdout.read(92)
             line += symbol
 
-            data = findall(pattern, str(line))
+            data = findall('frame=\s*(\d+)\s+', str(line))
             if data:
                 info(str(line))
                 line = b''
-                strategy(data[0])
-
-                # If FPS found, search frame numbers
-                pattern = 'frame=\s*(\d+)\s+'  # Frame pattern
-                strategy = self._set_current_frames
-                self._gui._progress_bar.Update()
+                self._set_current_frames(data[0])
 
         process.communicate()
 
@@ -148,7 +151,8 @@ class Task(Thread):
     def _get_video_fps(self, file):
         command = self._gui._ffprobe_path + ' -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 ' \
                                             '-show_entries stream=r_frame_rate "%s"' % file
-        return float(getoutput(command))
+        fps_n, fps_z = getoutput(command).split('/')
+        return float(fps_n) / float(fps_z)
 
     def _get_duration(self, file):
         """
@@ -175,4 +179,4 @@ class Task(Thread):
                           new_file=o_file + suffix,
                           input_framerate=input_framerate)
 
-    info('\nDONE')
+    info('DONE')

@@ -45,8 +45,9 @@ class Window(Frame):
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
 
-        self._audio_options = {'Native format': '-c:a copy', 'no audio': '-an',
-                               'opus': '-c:a libopus -vbr on -b:a 128k'}
+        self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 128k',
+                               'no audio': '-an',
+                               'Native format': '-c:a copy'}
         self._audio_select = StandardSelection(parent=panel, options=list(self._audio_options.keys()),
                                                callback=None,
                                                title='Audio codec')
