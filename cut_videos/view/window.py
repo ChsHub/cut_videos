@@ -1,54 +1,13 @@
 from logging import info
 from os.path import abspath, exists
 
-from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, Frame, \
-    ID_ANY, EXPAND, HORIZONTAL, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, NORMAL, MODERN, TextCtrl, \
-    GA_HORIZONTAL, Gauge
+from wx import Panel, BoxSizer, VERTICAL, Font, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
+    NORMAL, MODERN, GA_HORIZONTAL, Gauge
 from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.model.task import Task
-
-
-class StandardSelection(Panel):
-    def __init__(self, parent, callback, title, options):
-        super().__init__(parent)
-
-        sizer = BoxSizer(VERTICAL)
-        text = StaticText(self, label=title)
-        sizer.Add(text)
-        self.selection = ComboBox(self, style=CB_DROPDOWN | CB_READONLY, choices=options)
-        font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-        text.SetFont(font)
-        self.selection.SetFont(font)
-        # self.selection.SetFont(font)
-        self.selection.SetValue(options[0])
-        if callback:
-            self.selection.Bind(EVT_TEXT, lambda x: callback(self.selection.GetValue()))
-        sizer.Add(self.selection, 1, EXPAND)
-        self.SetSizer(sizer)
-
-    def get_selection(self):
-        return self.selection.GetValue()
-
-
-class SimpleInput(Panel):
-
-    def __init__(self, parent, label, initial=""):
-        super().__init__(parent)
-
-        sizer = BoxSizer(HORIZONTAL)
-        self._text_input = TextCtrl(self)
-        self._text_input.SetFont(Font(40, MODERN, NORMAL, NORMAL, False, u'Consolas'))
-        self._text_input.SetValue(initial)
-        sizer.Add(self._text_input, 1, EXPAND)
-
-        text = StaticText(self, label=label)
-        text.SetFont(Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas'))
-        sizer.Add(text, 1, EXPAND)
-        self.SetSizer(sizer)
-
-    def get_value(self):
-        return self._text_input.GetValue()
+from cut_videos.model.task_gif import TaskGif
+from cut_videos.view.widgets import StandardSelection, SimpleInput
 
 
 class Window(Frame):
@@ -96,7 +55,9 @@ class Window(Frame):
             'WEBM': (
                 ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
                 ".webm"),
-            'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"), 'FRAMES': ('', '/%03d.png'), 'gif': '',
+            'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"),
+            'FRAMES': ('', '/%03d.png'),
+            'gif': '',
             'COPY': ('-c copy', '%ext')}
         self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
                                                callback=None,
@@ -122,4 +83,7 @@ class Window(Frame):
         self._files = files
 
     def _submit_task(self, event):
-        Task(self).start()
+        if self._video_select.get_selection() == 'gif':
+            TaskGif(self).start()
+        else:
+            Task(self).start()
