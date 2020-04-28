@@ -39,6 +39,7 @@ class Task(Thread):
 
         # Load videos
         if len(videos):
+            info('Convert %s videos' % len(videos))
             if input_framerate:
                 input_framerate = ' -r ' + input_framerate
 
@@ -48,6 +49,7 @@ class Task(Thread):
                               + '_' + i_file)
                 o_file, _ = splitext(o_file)
                 i_file = join(self._gui._path, i_file)
+                info('CONVERT %s to %s' % (i_file, o_file))
                 # Convert the video
                 self._set_total_frames(self._get_duration(i_file) * self._get_video_fps(i_file))
                 self._convert(i_file, o_file, input_framerate=(1, input_framerate))
@@ -64,11 +66,13 @@ class Task(Thread):
 
     def _get_time(self):
         time = ''
-        if self._gui._start_input.get_value() != '00:00:00.0':
-            time = '-sn -ss ' + self._gui._start_input.get_value()
-            # Cut till end if no input is given
-            if self._gui._end_input.get_value() != '00:00:00.0':
-                time += ' -to ' + self._gui._end_input.get_value()
+        start_time = self._gui._start_input.get_value()
+        end_time = self._gui._end_input.get_value()
+        if start_time != '00:00:00.0' or end_time != '00:00:00.0':
+            time = '-sn -ss ' + start_time
+        # Cut till end if no input is given
+        if end_time != '00:00:00.0':
+            time += ' -to ' + end_time
         return time
 
     def _get_audio_command(self, file):
@@ -110,7 +114,7 @@ class Task(Thread):
                    '-i "%s"' % file,
                    time, audio_command, command,
                    '"%s"' % get_clean_path(new_file)]
-        if input_framerate:
+        if input_framerate[1]:
             index, input_framerate = input_framerate
             command.insert(index, input_framerate)
         command = ' '.join(command)
@@ -134,7 +138,8 @@ class Task(Thread):
                 line = b''
                 self._set_current_frames(data[0])
 
-        process.communicate()
+        result = process.communicate()
+        print(result)
 
     def move_files(self, temp_path, files):
         digits = 3
@@ -172,7 +177,7 @@ class Task(Thread):
         return result
 
     def _convert(self, i_file, o_file, input_framerate: tuple):
-
+        info('CONVERT: ' + i_file)
         command, suffix = self._gui._video_options[self._gui._video_select.get_selection()]
         self._run_command(file=i_file,
                           command=command,

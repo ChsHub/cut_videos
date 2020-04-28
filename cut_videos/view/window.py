@@ -84,6 +84,7 @@ class Window(Frame):
         self._files = files
 
     def _submit_task(self, event):
+        info('START TASK')
         if self._video_select.get_selection() == 'gif':
             TaskGif(self).start()
         else:
