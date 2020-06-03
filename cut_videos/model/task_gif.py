@@ -8,7 +8,7 @@ from cut_videos.model.task import Task
 
 
 class TaskGif(Task):
-    def convert(self, i_file, o_file, input_framerate: tuple):
+    def _convert(self, i_file, o_file, input_framerate: tuple):
 
         with TemporaryDirectory() as palette_dir:
             # generate palette

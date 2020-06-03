@@ -156,7 +156,10 @@ class Task(Thread):
     def _get_video_fps(self, file):
         command = self._gui._ffprobe_path + ' -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 ' \
                                             '-show_entries stream=r_frame_rate "%s"' % file
-        fps_n, fps_z = getoutput(command).split('/')
+        output = getoutput(command)
+        if not output:
+            return 1  # in case of audio
+        fps_n, fps_z = output.split('/')
         return float(fps_n) / float(fps_z)
 
     def _get_duration(self, file):
