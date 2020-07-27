@@ -1,3 +1,4 @@
+import locale
 from datetime import datetime as date
 from logging import info
 from os import mkdir
@@ -168,9 +169,10 @@ class Task(Thread):
         :param file: Video file
         :return: Duration in seconds
         """
+        locale.setlocale(locale.LC_ALL, 'en_US.utf8')
         FMT = '%H:%M:%S.%f'
-        result = date.strptime(self._gui._end_input.get_value(), FMT) - date.strptime(
-            self._gui._start_input.get_value(), FMT)
+        result = date.strptime(self._gui._end_input.get_value(), FMT) \
+                 - date.strptime(self._gui._start_input.get_value(), FMT)
         result = result.total_seconds()
 
         if result == 0.0:

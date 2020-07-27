@@ -47,6 +47,7 @@ class Window(Frame):
 
         self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 128k',
                                'no audio': '-an',
+                               'mp3': '-c:a libmp3lame -qscale:a 3',
                                'Native format': '-c:a copy'}
         self._audio_select = StandardSelection(parent=panel, options=list(self._audio_options.keys()),
                                                callback=None,
