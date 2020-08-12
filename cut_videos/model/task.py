@@ -3,7 +3,7 @@ from datetime import datetime as date
 from logging import info
 from os import mkdir
 from os.path import join, splitext, split, exists
-from re import findall
+from re import search, findall
 from shutil import copy
 from subprocess import Popen, PIPE, STDOUT, getoutput
 from tempfile import TemporaryDirectory
@@ -129,12 +129,15 @@ class Task(Thread):
     def _monitor_process(self, process):
         symbol = ' '
         line = b''
+        length = 92
         while symbol:
-            symbol = process.stdout.read(92)
+            symbol = process.stdout.read(length)
             line += symbol
 
             data = findall('frame=\s*(\d+)\s+', str(line))
+            #data = list(map(int, data))
             if data:
+                matches = search('frame=\s*(\d+)\s+', str(line))
                 info(str(line))
                 line = b''
                 self._set_current_frames(data[0])

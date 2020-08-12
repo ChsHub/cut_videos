@@ -47,7 +47,8 @@ class Window(Frame):
 
         self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 128k',
                                'no audio': '-an',
-                               'mp3': '-c:a libmp3lame -qscale:a 3',
+                               #'mp3': '-c:a libmp3lame -qscale:a 3',
+                               #'aac': '-c:a aac -b:a 160k',
                                'Native format': '-c:a copy'}
         self._audio_select = StandardSelection(parent=panel, options=list(self._audio_options.keys()),
                                                callback=None,
@@ -55,9 +56,9 @@ class Window(Frame):
 
         self._video_options = {
             'WEBM': (
-                ' -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+                ' -sn -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
                 ".webm"),
-            'MP4': ('-async 1 -lavfi "scale=%scale"', ".mp4"),
+            'MP4': ('-async 1 -lavfi "scale=%scale" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv422p', ".mp4"),
             'FRAMES': ('', '/%03d.png'),
             'gif': '',
             'COPY': ('-c copy', '%ext')}
