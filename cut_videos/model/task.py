@@ -1,9 +1,10 @@
+import io
 import locale
 from datetime import datetime as date
 from logging import info
 from os import mkdir
 from os.path import join, splitext, split, exists
-from re import search, findall
+from re import findall
 from shutil import copy
 from subprocess import Popen, PIPE, STDOUT, getoutput
 from tempfile import TemporaryDirectory
@@ -127,19 +128,10 @@ class Task(Thread):
             self._monitor_process(process)
 
     def _monitor_process(self, process):
-        symbol = ' '
-        line = b''
-        length = 92
-        while symbol:
-            symbol = process.stdout.read(length)
-            line += symbol
-
-            data = findall('frame=\s*(\d+)\s+', str(line))
-            #data = list(map(int, data))
-            if data:
-                matches = search('frame=\s*(\d+)\s+', str(line))
-                info(str(line))
-                line = b''
+        reader = io.TextIOWrapper(process.stdout, encoding='UTF-8', newline='\r')
+        while line := reader.readline():
+            if data := findall('frame=\s*(\d+)\s+', line):
+                info(line)
                 self._set_current_frames(data[0])
 
         result = process.communicate()
@@ -163,8 +155,14 @@ class Task(Thread):
         output = getoutput(command)
         if not output:
             return 1  # in case of audio
-        fps_n, fps_z = output.split('/')
-        return float(fps_n) / float(fps_z)
+        if '\n' in output:
+            output = output.split('\n')[0]
+        if '/' in output:
+            output = output.split('/')
+        if len(output) == 2:
+            fps_n, fps_z = output
+            return float(fps_n) / float(fps_z)
+        return float(24)
 
     def _get_duration(self, file):
         """

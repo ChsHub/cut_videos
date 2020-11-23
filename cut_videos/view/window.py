@@ -7,7 +7,7 @@ from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.model.task import Task
 from cut_videos.model.task_gif import TaskGif
-from cut_videos.view.widgets import StandardSelection, SimpleInput
+from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
 
 
 class Window(Frame):
@@ -36,8 +36,8 @@ class Window(Frame):
         self._progress_bar = Gauge(panel, style=GA_HORIZONTAL)
 
         #  Create Input fields
-        self._start_input = SimpleInput(panel, label='START', initial='00:00:00.0')
-        self._end_input = SimpleInput(panel, label='END', initial='00:00:00.0')
+        self._start_input = TimeInput(panel, label='START', initial='00:00:00.0')
+        self._end_input = TimeInput(panel, label='END', initial='00:00:00.0')
         self._scale_input = SimpleInput(panel, label='Width:Height', initial='-1:-1')
         self._webm_input = SimpleInput(panel, label='WEBM Quality', initial='36')
         self._framerate_input = SimpleInput(panel, label='INPUT FRAMES FRAMERATE', initial='')
@@ -45,7 +45,7 @@ class Window(Frame):
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
 
-        self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 128k',
+        self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
                                'no audio': '-an',
                                #'mp3': '-c:a libmp3lame -qscale:a 3',
                                #'aac': '-c:a aac -b:a 160k',
@@ -58,7 +58,7 @@ class Window(Frame):
             'WEBM': (
                 ' -sn -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
                 ".webm"),
-            'MP4': ('-async 1 -lavfi "scale=%scale" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv422p', ".mp4"),
+            'MP4': ('-async 1 -lavfi "scale=%scale" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv420p', ".mp4"),
             'FRAMES': ('', '/%03d.png'),
             'gif': '',
             'COPY': ('-c copy', '%ext')}

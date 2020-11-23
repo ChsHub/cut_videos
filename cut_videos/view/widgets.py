@@ -42,3 +42,7 @@ class SimpleInput(Panel):
 
     def get_value(self):
         return self._text_input.GetValue()
+
+class TimeInput(SimpleInput):
+    def get_value(self):
+        return self._text_input.GetValue().replace('-', ':').replace('_', '')
