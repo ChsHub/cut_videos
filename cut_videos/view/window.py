@@ -30,7 +30,7 @@ class Window(Frame):
         panel = Panel(self, EXPAND)
         sizer = BoxSizer(VERTICAL)
         sizer.Add(FileInput(panel, text_button="Open File", callback=self._set_file,
-                            file_type="*.mkv;*.mp4;*.webm;*.avi;*.bmp;*.wmv;*.gif;*.png;*.jpg;",
+                            file_type="*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.gif;*.png;*.jpg;",
                             text_title="OPEN", text_open_file="File"), 1, EXPAND)
 
         self._progress_bar = Gauge(panel, style=GA_HORIZONTAL)
@@ -47,21 +47,21 @@ class Window(Frame):
 
         self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
                                'no audio': '-an',
-                               #'mp3': '-c:a libmp3lame -qscale:a 3',
-                               #'aac': '-c:a aac -b:a 160k',
-                               'Native format': '-c:a copy'}
+                               'Native format': '-c:a copy',
+                               'mp3': '-c:a libmp3lame -qscale:a 3',
+                               'aac': '-c:a aac -b:a 160k'}
         self._audio_select = StandardSelection(parent=panel, options=list(self._audio_options.keys()),
                                                callback=None,
                                                title='Audio codec')
 
         self._video_options = {
             'WEBM': (
-                ' -sn -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 8 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
+                ' -sn -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 2 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
                 ".webm"),
             'MP4': ('-async 1 -lavfi "scale=%scale" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv420p', ".mp4"),
             'FRAMES': ('', '/%03d.png'),
             'gif': '',
-            'COPY': ('-c copy', '%ext')}
+            'COPY': ('-map 0:v:0 -c:v copy', '%ext')}
         self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
                                                callback=None,
                                                title='Video format')
@@ -88,6 +88,6 @@ class Window(Frame):
     def _submit_task(self, event):
         info('START TASK')
         if self._video_select.get_selection() == 'gif':
-            TaskGif(self).start()
+            TaskGif(self, self._start_input.get_value()).start()
         else:
-            Task(self).start()
+            Task(self, self._start_input.get_value()).start()
