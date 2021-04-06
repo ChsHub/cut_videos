@@ -12,6 +12,7 @@ from threading import Thread
 
 from timerpy import Timer
 
+from cut_videos.commands import audio_options, image_types
 from cut_videos.paths import ffmpeg_path, ffprobe_path
 
 
@@ -26,16 +27,25 @@ def _format_time(time):
 
 
 class Task(Thread):
-    def __init__(self, gui, start_time, end_time):
+    def __init__(self, start_time, end_time, path, files, video_selection, audio_selection, input_framerate,
+                 set_total_frames, set_current_frame_nr, scale_input, webm_input):
         Thread.__init__(self, daemon=True)  # Run in new thread
-        self._gui = gui
         self._start_time = start_time
         self._end_time = end_time
+        self._path = path
+        self._files = files
+        self._video_selection = video_selection
+        self._audio_selection = audio_selection
+        self._input_framerate = ' -r ' + input_framerate if input_framerate else ''
+        self._set_total_frames = set_total_frames
+        self._set_current_frame_nr = set_current_frame_nr
+        self._scale_input = scale_input
+        self._webm_input = webm_input
 
     def get_output_name(self, i_file):
         i_file, _ = splitext(i_file)  # Remove ext
         start_t = _format_time(self._start_time)
-        end_t = _format_time(self._gui._end_input.get_value())
+        end_t = _format_time(self._end_time)
         return '_%s_[%s_%s]' % (i_file, start_t, end_t)
 
     def _convert_frames(self, frames):
@@ -46,33 +56,23 @@ class Task(Thread):
                 self._convert(join(temp_path, '%3d' + splitext(frames[0])[-1]), frames[0], len(frames))
 
     def run(self):
-        types = ('.bmp', '.png', '.jpg', '.webp')
-        frames = list(filter(lambda x: splitext(x)[-1].lower() in types, self._gui._files))
-        videos = list(filter(lambda x: splitext(x)[-1].lower() not in types, self._gui._files))
+        frames = list(filter(lambda x: splitext(x)[-1].lower() in image_types, self._files))
+        videos = list(filter(lambda x: splitext(x)[-1].lower() not in image_types, self._files))
         # Load frames
         self._convert_frames(frames)
 
         # Load videos
         for i_file in videos:
             o_file = self.get_output_name(i_file)
-            i_file = join(self._gui._path, i_file)
+            i_file = join(self._path, i_file)
             # Convert the video
             self._convert(i_file, o_file,
                           frame_count=self._get_duration(i_file) * self._get_video_fps(i_file))
 
-    def _set_current_frames(self, value):
-        frame_nr = int(value)
-        self._gui._progress_bar.SetValue(frame_nr)
-        self._gui._progress_bar.Update()
-
-    def _set_total_frames(self, total_frames):
-        self._gui._progress_bar.SetValue(0)
-        self._gui._progress_bar.SetRange(int(total_frames))
-
     def _get_time(self):
         time = ''
         start_time = self._start_time
-        end_time = self._gui._end_input.get_value()
+        end_time = self._end_time
         if start_time != '00:00:00.0' or end_time != '00:00:00.0':
             time = '-sn -ss ' + start_time
         # Cut till end if no input is given
@@ -83,7 +83,7 @@ class Task(Thread):
     def _get_audio_command(self, file):
         # TODO downmix
         # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
-        audio_selection = self._gui._audio_select.get_selection()
+        audio_selection = self._audio_selection
         audio_codec = self._get_audio_codec(file)
 
         info('SELECTED: ' + audio_selection)
@@ -91,21 +91,19 @@ class Task(Thread):
 
         # DON'T convert if selected codec is input codec
         audio_command = 'Native format' if audio_codec == audio_selection else audio_selection
-        audio_command = self._gui._audio_options[audio_command]
+        audio_command = audio_options[audio_command]
         return audio_command
 
     def _run_command(self, file, command, new_file):
-        input_framerate = self._gui._framerate_input.get_value()
-        input_framerate = ' -r ' + input_framerate if input_framerate else ''
 
-        new_file = join(self._gui._path, new_file)
+        new_file = join(self._path, new_file)
         if exists(new_file):
             info('ALREADY EXISTS: ' + new_file)
             return
 
         # Insert selected values into command
-        command = command.replace('%scale', self._gui._scale_input.get_value())
-        command = command.replace('%crf', self._gui._webm_input.get_value())
+        command = command.replace('<res>', self._scale_input)
+        command = command.replace('%crf', self._webm_input)
 
         # Output directory for frames
         if not command:
@@ -119,7 +117,7 @@ class Task(Thread):
         audio_command = self._get_audio_command(file)
 
         command = ['"%s"' % ffmpeg_path,
-                   input_framerate,
+                   self._input_framerate,
                    '-i "%s"' % file,
                    self._get_time(), audio_command, command,
                    '"%s"' % new_file]
@@ -130,14 +128,14 @@ class Task(Thread):
         with Timer('CONVERT'):
             process = Popen(command, shell=False, stdout=PIPE, stderr=STDOUT)
             self._monitor_process(process)
-        startfile(split(file)[0])  # Open directory
+        startfile(split(new_file)[0])  # Open directory
 
     def _monitor_process(self, process):
         reader = io.TextIOWrapper(process.stdout, encoding='UTF-8', newline='\r')
         while line := reader.readline():
             if data := findall(r'frame=\s*(\d+)\s+', line):
                 info(line)
-                self._set_current_frames(data[0])
+                self._set_current_frame_nr(data[0])
 
         result = process.communicate()
         print(result)
@@ -147,7 +145,7 @@ class Task(Thread):
         for i, file in enumerate(sorted(files)):
             i += 1
             file_name = (digits - len(str(i))) * "0" + str(i) + splitext(file)[-1]
-            copy(join(self._gui._path, file), join(temp_path, file_name))
+            copy(join(self._path, file), join(temp_path, file_name))
 
     def _get_audio_codec(self, file):
         command = ffprobe_path + ' -v error -select_streams a:0 -show_entries stream=codec_name \
@@ -194,7 +192,7 @@ class Task(Thread):
     def _convert(self, i_file, o_file, frame_count):
         self._set_total_frames(frame_count)
         info('CONVERT %s to %s' % (i_file, o_file))
-        command, suffix = self._gui._video_options[self._gui._video_select.get_selection()]
+        command, suffix = self._video_selection
         suffix = suffix.replace('%ext', splitext(i_file)[-1])  # COPY keep same ext
         self._run_command(file=i_file,
                           command=command,

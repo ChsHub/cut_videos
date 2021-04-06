@@ -4,6 +4,7 @@ from wx import Panel, BoxSizer, VERTICAL, Font, Frame, ID_ANY, EXPAND, EVT_CLOSE
     NORMAL, MODERN, GA_HORIZONTAL, Gauge
 from wxwidgets import FileInput, SimpleButton
 
+from cut_videos.commands import video_options, audio_options
 from cut_videos.model.task import Task
 from cut_videos.model.task_gif import TaskGif
 from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
@@ -38,24 +39,11 @@ class Window(Frame):
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
 
-        self._audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
-                               'no audio': '-an',
-                               'Native format': '-c:a copy',
-                               'mp3': '-c:a libmp3lame -qscale:a 3',
-                               'aac': '-c:a aac -b:a 160k'}
-        self._audio_select = StandardSelection(parent=panel, options=list(self._audio_options.keys()),
+        self._audio_select = StandardSelection(parent=panel, options=list(audio_options.keys()),
                                                callback=None,
                                                title='Audio codec')
 
-        self._video_options = {
-            'WEBM': (
-                ' -sn -lavfi "scale=%scale" -c:v libvpx-vp9 -speed 0 -crf %crf -b:v 0 -threads 2 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25',
-                ".webm"),
-            'MP4': ('-async 1 -lavfi "scale=%scale" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv420p', ".mp4"),
-            'FRAMES': ('', '/%03d.png'),
-            'gif': '',
-            'COPY': ('-map 0:v:0 -c:v copy', '%ext')}
-        self._video_select = StandardSelection(parent=panel, options=list(self._video_options.keys()),
+        self._video_select = StandardSelection(parent=panel, options=list(video_options.keys()),
                                                callback=None,
                                                title='Video format')
 
@@ -78,9 +66,23 @@ class Window(Frame):
         self._path = path
         self._files = files
 
+    def _set_current_frame_nr(self, frame_nr):
+        self._progress_bar.SetValue(int(frame_nr))
+        self._progress_bar.Update()
+
+    def _set_total_frames(self, total_frames):
+        self._progress_bar.SetValue(0)
+        self._progress_bar.SetRange(int(total_frames))
+
     def _submit_task(self, event):
         info('START TASK')
+        task = Task
+
         if self._video_select.get_selection() == 'gif':
-            TaskGif(self, self._start_input.get_value(), self._end_input.get_value()).start()
-        else:
-            Task(self, self._start_input.get_value(), self._end_input.get_value()).start()
+            task = TaskGif
+
+        task(self._start_input.get_value(), self._end_input.get_value(), self._path, self._files,
+             video_options[self._video_select.get_selection()],
+             self._audio_select.get_selection(), self._framerate_input.get_value(),
+             self._set_total_frames, self._set_current_frame_nr,
+             self._scale_input.get_value(), self._webm_input.get_value()).start()

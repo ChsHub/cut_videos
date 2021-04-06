@@ -15,7 +15,7 @@ class TaskGif(Task):
             with Timer('GENERATE PALETTE', log_function=info):
                 palette = palette_dir + '/palette.png'
                 self._run_command(file=i_file,
-                                  command=' -vf "scale=' + self._gui._scale_input.get_value() + ':flags=lanczos,palettegen"',
+                                  command=' -vf "scale=<res>:flags=lanczos,palettegen"',
                                   new_file=palette)
             if not exists(palette):
                 error('No Palette')
@@ -26,5 +26,5 @@ class TaskGif(Task):
                 (':flags=lanczos,paletteuse=dither=none', "_default.gif"),
                 ('', '_no_pal.gif')]:
                 self._run_command(file=i_file + '" -i "' + palette,
-                                  command=' -lavfi "scale=%s%s"' % (self._gui._scale_input.get_value(), mode),
+                                  command=' -lavfi "scale=<res>%s"' % mode,
                                   new_file=o_file + suffix)
