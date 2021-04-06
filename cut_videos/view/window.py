@@ -81,6 +81,6 @@ class Window(Frame):
     def _submit_task(self, event):
         info('START TASK')
         if self._video_select.get_selection() == 'gif':
-            TaskGif(self, self._start_input.get_value()).start()
+            TaskGif(self, self._start_input.get_value(), self._end_input.get_value()).start()
         else:
-            Task(self, self._start_input.get_value()).start()
+            Task(self, self._start_input.get_value(), self._end_input.get_value()).start()

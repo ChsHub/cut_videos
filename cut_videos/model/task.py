@@ -26,11 +26,11 @@ def _format_time(time):
 
 
 class Task(Thread):
-    def __init__(self, gui, start_time):
+    def __init__(self, gui, start_time, end_time):
         Thread.__init__(self, daemon=True)  # Run in new thread
         self._gui = gui
         self._start_time = start_time
-        self._end_time = self._gui._end_input.get_value()
+        self._end_time = end_time
 
     def get_output_name(self, i_file):
         i_file, _ = splitext(i_file)  # Remove ext
@@ -58,7 +58,7 @@ class Task(Thread):
             i_file = join(self._gui._path, i_file)
             # Convert the video
             self._convert(i_file, o_file,
-                          self._get_duration(i_file) * self._get_video_fps(i_file))
+                          frame_count=self._get_duration(i_file) * self._get_video_fps(i_file))
 
     def _set_current_frames(self, value):
         frame_nr = int(value)
@@ -181,13 +181,14 @@ class Task(Thread):
         """
         locale.setlocale(locale.LC_ALL, 'en_US.utf8')
         time_format = '%H:%M:%S.%f'
+        result = self._end_time
 
-        if self._end_time == '00:00:00.0':
+        if result == '00:00:00.0':  # Run probe
             command = '"%s" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal "%s"'
             command %= (ffprobe_path, file)
-            self._end_time = getoutput(command)
+            result = getoutput(command)
 
-        result = date.strptime(self._end_time, time_format) - date.strptime(self._start_time, time_format)
+        result = date.strptime(result, time_format) - date.strptime(self._start_time, time_format)
         return result.total_seconds()
 
     def _convert(self, i_file, o_file, frame_count):
@@ -199,4 +200,4 @@ class Task(Thread):
                           command=command,
                           new_file=o_file + suffix)
 
-    info('DONE')
+        info('DONE')
