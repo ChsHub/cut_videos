@@ -8,7 +8,7 @@ from cut_videos.model.task import Task
 
 
 class TaskGif(Task):
-    def _convert(self, i_file, o_file, input_framerate: tuple):
+    def _convert(self, i_file, o_file):
 
         with TemporaryDirectory() as palette_dir:
             # generate palette
@@ -16,8 +16,7 @@ class TaskGif(Task):
                 palette = palette_dir + '/palette.png'
                 self._run_command(file=i_file,
                                   command=' -vf "scale=' + self._gui._scale_input.get_value() + ':flags=lanczos,palettegen"',
-                                  new_file=palette,
-                                  input_framerate=input_framerate)
+                                  new_file=palette)
             if not exists(palette):
                 error('No Palette')
                 return
@@ -28,5 +27,4 @@ class TaskGif(Task):
                 ('', '_no_pal.gif')]:
                 self._run_command(file=i_file + '" -i "' + palette,
                                   command=' -lavfi "scale=%s%s"' % (self._gui._scale_input.get_value(), mode),
-                                  new_file=o_file + suffix,
-                                  input_framerate=input_framerate)
+                                  new_file=o_file + suffix)

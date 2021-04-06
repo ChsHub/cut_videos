@@ -1,5 +1,4 @@
 from logging import info
-from os.path import abspath, exists
 
 from wx import Panel, BoxSizer, VERTICAL, Font, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
     NORMAL, MODERN, GA_HORIZONTAL, Gauge
@@ -14,12 +13,6 @@ class Window(Frame):
     def __init__(self):
         self._files = []
         self._path = None
-        self._ffmpeg_path = abspath('lib\\ffmpeg\\bin\\ffmpeg.exe')
-        self._ffprobe_path = abspath('lib\\ffmpeg\\bin\\ffprobe.exe')
-
-        if not exists(self._ffmpeg_path) or not exists(self._ffprobe_path):
-            info('ffmpeg not found')
-            raise FileNotFoundError
 
         # init window
         Frame.__init__(self, None, ID_ANY, "CUT", size=(800, 800))
