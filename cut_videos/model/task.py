@@ -71,26 +71,23 @@ class Task(Thread):
 
     def _get_time(self):
         time = ''
-        start_time = self._start_time
-        end_time = self._end_time
-        if start_time != '00:00:00.0' or end_time != '00:00:00.0':
-            time = '-sn -ss ' + start_time
+        if self._start_time != '00:00:00.0' or self._end_time != '00:00:00.0':
+            time = '-sn -ss ' + self._start_time
         # Cut till end if no input is given
-        if end_time != '00:00:00.0':
-            time += ' -to ' + end_time
+        if self._end_time != '00:00:00.0':
+            time += ' -to ' + self._end_time
         return time
 
     def _get_audio_command(self, file):
         # TODO downmix
         # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
-        audio_selection = self._audio_selection
         audio_codec = self._get_audio_codec(file)
 
-        info('SELECTED: ' + audio_selection)
+        info('SELECTED: ' + self._audio_selection)
         info('INPUT: ' + audio_codec)
 
         # DON'T convert if selected codec is input codec
-        audio_command = 'Native format' if audio_codec == audio_selection else audio_selection
+        audio_command = 'Native format' if audio_codec == self._audio_selection else self._audio_selection
         audio_command = audio_options[audio_command]
         return audio_command
 
@@ -103,7 +100,7 @@ class Task(Thread):
 
         # Insert selected values into command
         command = command.replace('<res>', self._scale_input)
-        command = command.replace('%crf', self._webm_input)
+        command = command.replace('<crf>', self._webm_input)
 
         # Output directory for frames
         if not command:
