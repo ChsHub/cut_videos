@@ -7,7 +7,7 @@ from wx import App
 from cut_videos.view.window import Window
 
 if __name__ == "__main__":
-    with Logger():
+    with Logger(debug=True):
         if not exists(ffmpeg_path) or not exists(ffprobe_path):
             info('ffmpeg not found')
             raise FileNotFoundError
