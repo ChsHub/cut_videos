@@ -8,8 +8,7 @@ from cut_videos.model.task import Task
 
 
 class TaskGif(Task):
-    def _convert(self, i_file, o_file, frame_count):
-        self._set_total_frames(frame_count)
+    def _convert(self, i_file, o_file):
         with TemporaryDirectory() as palette_dir:
             # Generate palette
             palette = palette_dir + '/palette.png'
@@ -21,4 +20,4 @@ class TaskGif(Task):
                 return
             self._run_command(file=i_file + '" -i "' + palette,
                               command=' -lavfi "scale=<res>:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"',
-                              new_file=o_file + '_bayer.gif')
+                              new_file=o_file + '.gif')

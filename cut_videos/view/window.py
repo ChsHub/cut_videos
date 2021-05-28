@@ -12,8 +12,8 @@ from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
 
 class Window(Frame):
     def __init__(self):
-        self._files = []
-        self._path = None
+        self.files = []
+        self.path = None
 
         # init window
         Frame.__init__(self, None, ID_ANY, "CUT", size=(800, 800))
@@ -62,15 +62,43 @@ class Window(Frame):
         sizer.Add(SimpleButton(panel, text_button='CUT', callback=self._submit_task), 1, EXPAND)
         panel.SetSizer(sizer)
 
-    def _set_file(self, path, files):
-        self._path = path
-        self._files = files
+    @property
+    def start_time(self):
+        return self._start_input.get_value()
 
-    def _set_current_frame_nr(self, frame_nr):
+    @property
+    def end_time(self):
+        return self._end_input.get_value()
+
+    @property
+    def video_selection(self):
+        return video_options[self._video_select.get_selection()]
+
+    @property
+    def audio_selection(self):
+        return self._audio_select.get_selection()
+
+    @property
+    def input_framerate(self):
+        return self._framerate_input.get_value()
+
+    @property
+    def scale_input(self):
+        return self._scale_input.get_value()
+
+    @property
+    def webm_input(self):
+        return self._webm_input.get_value()
+
+    def _set_file(self, path, files):
+        self.path = path
+        self.files = files
+
+    def set_current_frame_nr(self, frame_nr):
         self._progress_bar.SetValue(int(frame_nr))
         self._progress_bar.Update()
 
-    def _set_total_frames(self, total_frames):
+    def set_total_frames(self, total_frames):
         self._progress_bar.SetValue(0)
         self._progress_bar.SetRange(int(total_frames))
 
@@ -81,8 +109,4 @@ class Window(Frame):
         if self._video_select.get_selection() == 'gif':
             task = TaskGif
 
-        task(self._start_input.get_value(), self._end_input.get_value(), self._path, self._files,
-             video_options[self._video_select.get_selection()],
-             self._audio_select.get_selection(), self._framerate_input.get_value(),
-             self._set_total_frames, self._set_current_frame_nr,
-             self._scale_input.get_value(), self._webm_input.get_value()).start()
+        task(self).start()
