@@ -12,7 +12,7 @@ from threading import Thread
 from PIL import Image
 from timerpy import Timer
 
-from cut_videos.commands import audio_options, image_types, digits, input_ext
+from cut_videos.commands import audio_options, image_types, digits, input_ext, duration_command, fps_command
 from cut_videos.paths import ffmpeg_path, ffprobe_path
 
 time_format = '%H:%M:%S.%f'
@@ -35,7 +35,7 @@ class Task(Thread):
         self._start_time = window.start_time
         self._end_time = window.end_time
         self._path = window.path
-        self._files = window.files
+        self._files = window.files.copy()
         self._video_selection = window.video_selection
         self._audio_selection = window.audio_selection
         self._set_total_frames = window.set_total_frames
@@ -98,8 +98,7 @@ class Task(Thread):
 
         # DON'T convert if selected codec is input codec
         audio_command = 'Native format' if audio_codec == self._audio_selection else self._audio_selection
-        audio_command = audio_options[audio_command]
-        return audio_command
+        return audio_options[audio_command]
 
     def _run_command(self, file, command, new_file):
 
@@ -154,9 +153,7 @@ class Task(Thread):
         return getoutput(command)
 
     def _get_video_fps(self, file):
-        command = '"%s" -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate "%s"'
-        command %= (ffprobe_path, file)
-        output = getoutput(command)
+        output = getoutput(fps_command % (ffprobe_path, file))
         if not output:
             return 1  # in case of audio
 
@@ -182,9 +179,7 @@ class Task(Thread):
         result = self._end_time
 
         if result == '00:00:00.0':  # Run probe to find video length
-            command = '"%s" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal "%s"'
-            command %= (ffprobe_path, file)
-            result = getoutput(command)
+            result = getoutput(duration_command % (ffprobe_path, file))
 
         result = strptime(result, time_format) - strptime(self._start_time, time_format)
         return result.total_seconds()

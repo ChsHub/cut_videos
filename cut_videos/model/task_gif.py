@@ -19,5 +19,5 @@ class TaskGif(Task):
                 error('No Palette')
                 return
             self._run_command(file=i_file + '" -i "' + palette,
-                              command=' -lavfi "scale=<res>:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"',
+                              command=' -filter_complex "scale=<res>:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"',
                               new_file=o_file + '.gif')
