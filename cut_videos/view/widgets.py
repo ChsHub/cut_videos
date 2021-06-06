@@ -1,5 +1,7 @@
-from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, EXPAND, HORIZONTAL, \
+from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, EXPAND, \
+    HORIZONTAL, \
     NORMAL, MODERN, TextCtrl
+from wxwidgets import SimpleSizer, SimpleButton
 
 
 class StandardSelection(Panel):
@@ -43,6 +45,56 @@ class SimpleInput(Panel):
     def get_value(self):
         return self._text_input.GetValue()
 
-class TimeInput(SimpleInput):
+
+class DigitInput(Panel):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.digit = 0
+
+        with SimpleSizer(self, VERTICAL) as sizer:
+            button = SimpleButton(self, text_button='+', callback=self._plus, size=(40, 10))
+            sizer.Add(button, 1)
+
+            self._text_input = TextCtrl(self, size=(40, 70))
+            self._text_input.SetFont(Font(40, MODERN, NORMAL, NORMAL, False, u'Consolas'))
+            self._text_input.SetValue('0')
+            sizer.Add(self._text_input, 0)
+
+            sizer.Add(SimpleButton(self, text_button='-', callback=self._minus, size=(40, 20)), 1)
+
+    def _plus(self, _):
+        self.digit += 1
+        self.digit %= 10
+        self._text_input.SetValue(str(self.digit))
+
+    def _minus(self, _):
+        self.digit -= 1
+        self.digit %= 10
+        self._text_input.SetValue(str(self.digit))
+
     def get_value(self):
-        return self._text_input.GetValue().replace('-', ':').replace('_', '')
+        return self._text_input.GetValue()
+
+
+class TimeInput(Panel):
+    def __init__(self, parent, label, initial='00:00:00.0'):
+        super().__init__(parent)
+
+        self._digits = []
+        with SimpleSizer(self, HORIZONTAL) as sizer:
+            for s in [':', ':', '.', label]:
+                for i in range(2):
+                    self._digits.append(DigitInput(self))
+                    sizer.Add(self._digits[-1], 0)
+
+                text = StaticText(self, label=s)
+                text.SetFont(Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas'))
+                sizer.Add(text, 1)
+
+    def get_value(self):
+        digits = list(map(lambda x: x.get_value(), self._digits))
+        digits = ''.join(digits)
+        digits = digits[:2] + ':' + digits[2:4] + ':' + digits[4:6] + '.' + digits[6:] + '0'
+        print(digits)
+        return digits

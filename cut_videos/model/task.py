@@ -1,6 +1,7 @@
 import io
 import locale
-from datetime.datetime import strptime
+from datetime import datetime
+strptime = datetime.strptime
 from logging import info
 from os import mkdir, startfile
 from os.path import join, splitext, split, exists

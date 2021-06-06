@@ -16,7 +16,7 @@ class Window(Frame):
         self.path = None
 
         # init window
-        Frame.__init__(self, None, ID_ANY, "CUT", size=(800, 800))
+        Frame.__init__(self, None, ID_ANY, "CUT", size=(688, 800))
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
         loc = Icon()
         loc.CopyFromBitmap(Bitmap('icon.ico', BITMAP_TYPE_ANY))
@@ -30,8 +30,8 @@ class Window(Frame):
         self._progress_bar = Gauge(panel, style=GA_HORIZONTAL)
 
         #  Create Input fields
-        self._start_input = TimeInput(panel, label='START', initial='00:00:00.0')
-        self._end_input = TimeInput(panel, label='END', initial='00:00:00.0')
+        self._start_input = TimeInput(panel, label='START')
+        self._end_input = TimeInput(panel, label='END')
         self._scale_input = SimpleInput(panel, label='Width:Height', initial='-1:-1')
         self._webm_input = SimpleInput(panel, label='WEBM Quality', initial='36')
         self._framerate_input = SimpleInput(panel, label='INPUT FRAMES FRAMERATE', initial='')
