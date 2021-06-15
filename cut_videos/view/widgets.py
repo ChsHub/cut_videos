@@ -49,7 +49,7 @@ class SimpleInput(Panel):
 class DigitInput(Panel):
     def __init__(self, parent):
         super().__init__(parent)
-
+        self.mod = 10
         self.digit = 0
 
         with SimpleSizer(self, VERTICAL) as sizer:
@@ -65,12 +65,12 @@ class DigitInput(Panel):
 
     def _plus(self, _):
         self.digit += 1
-        self.digit %= 10
+        self.digit %= self.mod
         self._text_input.SetValue(str(self.digit))
 
     def _minus(self, _):
         self.digit -= 1
-        self.digit %= 10
+        self.digit %= self.mod
         self._text_input.SetValue(str(self.digit))
 
     def get_value(self):
@@ -91,6 +91,9 @@ class TimeInput(Panel):
                 text = StaticText(self, label=s)
                 text.SetFont(Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas'))
                 sizer.Add(text, 1)
+
+        self._digits[2].mod = 6
+        self._digits[4].mod = 6
 
     def get_value(self):
         digits = list(map(lambda x: x.get_value(), self._digits))
