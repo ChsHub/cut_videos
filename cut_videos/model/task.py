@@ -1,8 +1,9 @@
 import io
 import locale
 from datetime import datetime
+
 strptime = datetime.strptime
-from logging import info
+from logging import info, exception
 from os import mkdir, startfile
 from os.path import join, splitext, split, exists
 from re import findall, error
@@ -17,6 +18,7 @@ from cut_videos.commands import audio_options, image_types, digits, input_ext, d
 from cut_videos.paths import ffmpeg_path, ffprobe_path
 
 time_format = '%H:%M:%S.%f'
+zero_time = '00:00:00.000'
 
 
 def _format_time(time):
@@ -53,7 +55,7 @@ class Task(Thread):
                                '-ss 0.' + start_ms,
                                '-to ' + str(strptime(window.end_time, time_format)
                                             - strptime(start_s + '.0', time_format))
-                               if self._end_time != '00:00:00.0' else ''  # Cut to end if no input is given
+                               if self._end_time != zero_time else ''  # Cut to end if no input is given
                                ]
         self.static_command = ' '.join(self.static_command)
 
@@ -163,7 +165,10 @@ class Task(Thread):
             output = output.split('/')
             if len(output) == 2:
                 return float(output[0]) / float(output[1])
+            elif len(output) == 3:
+                return float(output[0]) / float(output[1].split('\n')[0])
             else:
+                exception('GET FPS FAIL %s' % str(output))
                 raise NotImplementedError
 
         error('UNKNOWN FRAMERATE VALUE %s' % output)
@@ -179,7 +184,7 @@ class Task(Thread):
         locale.setlocale(locale.LC_ALL, 'en_US.utf8')
         result = self._end_time
 
-        if result == '00:00:00.0':  # Run probe to find video length
+        if result == zero_time:  # Run probe to find video length
             result = getoutput(duration_command % (ffprobe_path, file))
 
         result = strptime(result, time_format) - strptime(self._start_time, time_format)

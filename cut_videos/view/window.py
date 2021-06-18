@@ -24,7 +24,7 @@ class Window(Frame):
         panel = Panel(self, EXPAND)
         sizer = BoxSizer(VERTICAL)
         sizer.Add(FileInput(panel, text_button="Open File", callback=self._set_file,
-                            file_type="*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.gif;*.png;*.jpg;",
+                            file_type="*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.m2ts;*.gif;*.png;*.jpg;",
                             text_title="OPEN", text_open_file="File"), 1, EXPAND)
 
         self._progress_bar = Gauge(panel, style=GA_HORIZONTAL)
@@ -98,7 +98,9 @@ class Window(Frame):
         self._progress_bar.SetValue(int(frame_nr))
         self._progress_bar.Update()
 
-    def set_total_frames(self, total_frames):
+    def set_total_frames(self, total_frames: int):
+        if total_frames <= 0:
+            raise ValueError
         self._progress_bar.SetValue(0)
         self._progress_bar.SetRange(int(total_frames))
 
