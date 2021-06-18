@@ -90,6 +90,10 @@ class Task(Thread):
         self._convert_frames(frames)
         self._convert_videos(videos)
 
+        # Set bar to full
+        self._set_total_frames(1)
+        self._set_current_frame_nr(1)
+
         startfile(self._path)  # Open directory when finished
 
     def _get_audio_command(self, file):

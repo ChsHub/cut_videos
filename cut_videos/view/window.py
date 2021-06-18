@@ -95,7 +95,6 @@ class Window(Frame):
         self._progress_bar.Update()
 
     def set_total_frames(self, total_frames: int):
-
         if total_frames <= 0:
             raise ValueError
         self._progress_bar.SetValue(0)
@@ -104,6 +103,7 @@ class Window(Frame):
     def _add_progress_bar(self):
         self._progress_bar = Gauge(self.panel, style=GA_HORIZONTAL)
         self.sizer.Add(self._progress_bar, 0, EXPAND)
+        self.Size = (self.Size[0], self.Size[1] + 20) # Enlarge window to fit new progress bar
         self.Update()
 
     def _submit_task(self, event):
