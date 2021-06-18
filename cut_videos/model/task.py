@@ -50,9 +50,10 @@ class Task(Thread):
         self.static_command = ['"%s"' % ffmpeg_path,
                                '-sn',  # '-sn' Automatic stream selection
                                ' -r ' + window.input_framerate if window.input_framerate else '',
-                               '-ss ' + start_s,  # Seeking on input file is faster https://trac.ffmpeg.org/wiki/Seeking
+                               '-ss ' + start_s if self._start_time != zero_time else '',
+                               # Seeking on input file is faster https://trac.ffmpeg.org/wiki/Seeking
                                '-i "%s"',
-                               '-ss 0.' + start_ms,
+                               '-ss 0.' + start_ms if self._start_time != zero_time else '',
                                '-to ' + str(strptime(window.end_time, time_format)
                                             - strptime(start_s + '.0', time_format))
                                if self._end_time != zero_time else ''  # Cut to end if no input is given
