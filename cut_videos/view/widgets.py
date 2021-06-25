@@ -76,6 +76,10 @@ class DigitInput(Panel):
     def get_value(self):
         return self._text_input.GetValue()
 
+    def set_value(self, digit: str):
+        self.digit = int(digit)
+        self._text_input.SetValue(str(self.digit))
+
 
 class TimeInput(Panel):
     def __init__(self, parent, label, initial='00:00:00.0'):
@@ -101,3 +105,9 @@ class TimeInput(Panel):
         digits = digits[:2] + ':' + digits[2:4] + ':' + digits[4:6] + '.' + digits[6:] + '0'
         print(digits)
         return digits
+
+    def set_value(self, digits):
+        if not len(self._digits) == len(digits):
+            raise ValueError
+        for digit_input, digit in zip(self._digits, digits):
+            digit_input.set_value(digit)

@@ -39,6 +39,21 @@ def test_convert_gif(o_file, i_file, input_framerate=''):
 
 
 @given(integers(min_value=1, max_value=9))
+def test_unformat_time(d):
+    assert '00000000' == unformat_time('')
+    assert '00250000' == unformat_time('25-')
+    assert '02000000' == unformat_time('2--')
+    assert '90000000' == unformat_time('90--')
+    assert '0000%s000' % d == unformat_time('%s0' % d)
+    assert '00000%s00' % d == unformat_time('%s' % d)
+    assert '00%s00000' % d == unformat_time('%s0-' % d)
+    assert '000%s0000' % d == unformat_time('%s-' % d)
+
+    assert '00000010' == unformat_time('.1')
+    assert '00000001' == unformat_time('.01')
+
+
+@given(integers(min_value=1, max_value=9))
 def test__format_time(d):
     assert _format_time('00:00:00.0') == ''
     assert _format_time('00:25:00.0') == '25-'
@@ -55,4 +70,5 @@ def test__format_time(d):
 
 
 if __name__ == '__main__':
+    test_unformat_time()
     test__format_time()

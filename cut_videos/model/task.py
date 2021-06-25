@@ -21,7 +21,34 @@ time_format = '%H:%M:%S.%f'
 zero_time = '00:00:00.000'
 
 
-def _format_time(time):
+def unformat_time(time: str) -> str:
+    """
+    Convert stort time string to long form (digits only)
+    :param time: Short time string
+    :return: Long format time 8 digit string
+    """
+    if '.' in time:
+        time, milli = time.split('.')
+        milli += (2 - len(milli)) * '0'  # Add trailing zeroes
+    else:
+        milli = '00'
+
+    # Add redundant zeroes
+    time = time.split('-')
+    while len(time) < 3:
+        time = ['00'] + time
+    for i, t in enumerate(time):
+        time[i] = (2 - len(t)) * '0' + t
+
+    return ''.join(time) + milli
+
+
+def _format_time(time: str) -> str:
+    """
+    Format time to shortened human readable form
+    :param time: Time string in long form
+    :return: Time string in shortened form
+    """
     time, milli = splitext(time)
     time = findall(r'([1-9]\d?)|00', time)
     time = '-'.join(time)
@@ -33,16 +60,18 @@ def _format_time(time):
 
 class Task(Thread):
 
-    def __init__(self, window):
+    def __init__(self, window, bar):
         Thread.__init__(self, daemon=True)  # Run in new thread
+        # View
+        self._set_total_frames = bar.set_total_frames
+        self._set_current_frame_nr = bar.set_current_frame_nr
+
         self._start_time = window.start_time
         self._end_time = window.end_time
         self._path = window.path
         self._files = window.files.copy()
         self._video_selection = window.video_selection
         self._audio_selection = window.audio_selection
-        self._set_total_frames = window.set_total_frames
-        self._set_current_frame_nr = window.set_current_frame_nr
         self._scale_input = window.scale_input
         self._webm_input = window.webm_input
         self._duration = None

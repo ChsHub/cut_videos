@@ -1,13 +1,17 @@
 from logging import info
+from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Font, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    NORMAL, MODERN, GA_HORIZONTAL, Gauge
+    NORMAL, MODERN, GA_HORIZONTAL
 from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.commands import video_options, audio_options
-from cut_videos.model.task import Task
+from cut_videos.model.task import Task, unformat_time
 from cut_videos.model.task_gif import TaskGif
+from cut_videos.view.progress_bar import ProgressBar
 from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
+
+file_exts = "*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.m2ts;*.gif;*.png;*.jpg;"
 
 
 class Window(Frame):
@@ -24,7 +28,7 @@ class Window(Frame):
         self.panel = Panel(self, EXPAND)
         self.sizer = BoxSizer(VERTICAL)
         self.sizer.Add(FileInput(self.panel, text_button="Open File", callback=self._set_file,
-                                 file_type="*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.m2ts;*.gif;*.png;*.jpg;",
+                                 file_type=file_exts,
                                  text_title="OPEN", text_open_file="File"), 1, EXPAND)
 
         #  Create Input fields
@@ -48,6 +52,9 @@ class Window(Frame):
         # Add inputs to self.sizer
         self.sizer.Add(self._video_select, 1, EXPAND)
         self.sizer.Add(self._audio_select, 1, EXPAND)
+        self.sizer.Add(FileInput(self.panel, text_button="Clone time", callback=self._clone_time,
+                                 file_type=file_exts,
+                                 text_title="OPEN", text_open_file="File"), 1, EXPAND)
         self.sizer.Add(self._start_input, 1, EXPAND)
         self.sizer.Add(self._end_input, 1, EXPAND)
         self.sizer.Add(self._scale_input, 1, EXPAND)
@@ -86,32 +93,30 @@ class Window(Frame):
     def webm_input(self):
         return self._webm_input.get_value()
 
+    def _clone_time(self, path, files):
+        data = files[-1]
+        start, end = findall(r"\[([^_]+)_([^]]+)\]", data)[:-2]
+        self._start_input.set_value(unformat_time(start))
+        self._end_input.set_value(unformat_time(end))
+
     def _set_file(self, path, files):
         self.path = path
         self.files = files
 
-    def set_current_frame_nr(self, frame_nr):
-        self._progress_bar.SetValue(int(frame_nr))
-        self._progress_bar.Update()
-
-    def set_total_frames(self, total_frames: int):
-        if total_frames <= 0:
-            raise ValueError
-        self._progress_bar.SetValue(0)
-        self._progress_bar.SetRange(int(total_frames))
-
     def _add_progress_bar(self):
-        self._progress_bar = Gauge(self.panel, style=GA_HORIZONTAL)
-        self.sizer.Add(self._progress_bar, 0, EXPAND)
-        self.Size = (self.Size[0], self.Size[1] + 20) # Enlarge window to fit new progress bar
+        progress_bar = ProgressBar(self.panel, style=GA_HORIZONTAL)
+        self.sizer.Add(progress_bar, 0, EXPAND)
+        self.Size = (self.Size[0], self.Size[1] + 20)  # Enlarge window to fit new progress bar
         self.Update()
+        return progress_bar
 
     def _submit_task(self, event):
         info('START TASK')
-        self._add_progress_bar()
-        task = Task
 
         if self._video_select.get_selection() == 'gif':
             task = TaskGif
+        else:
+            task = Task
 
-        task(self).start()
+        bar = self._add_progress_bar()
+        task(self, bar).start()
