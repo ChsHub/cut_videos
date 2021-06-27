@@ -95,7 +95,7 @@ class Window(Frame):
 
     def _clone_time(self, path, files):
         data = files[-1]
-        start, end = findall(r"\[([^_]+)_([^]]+)\]", data)[:-2]
+        start, end = findall(r"\[([\d+|-]+)_([\d+|-]+)\]", data)[-1]
         self._start_input.set_value(unformat_time(start))
         self._end_input.set_value(unformat_time(end))
 

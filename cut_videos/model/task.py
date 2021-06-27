@@ -172,7 +172,6 @@ class Task(Thread):
         reader = io.TextIOWrapper(process.stdout, encoding='UTF-8', newline='\r')
         while line := reader.readline():
             if data := findall(r'frame=\s*(\d+)\s+', line):
-                info(line)
                 self._set_current_frame_nr(data[0])
 
         result = process.communicate()
