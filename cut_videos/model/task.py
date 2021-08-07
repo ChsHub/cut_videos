@@ -181,6 +181,8 @@ class Task(Thread):
         for i, file in enumerate(sorted(files)):
             file_name = digits * "0" + str(i + 1)
             with Image.open(join(self._path, file)) as image:
+                if image.mode != 'RGB':
+                    image = image.convert('RGB')
                 image.save(join(temp_path, file_name[-digits:] + ext), quality=100)
 
     def _get_audio_codec(self, file):
