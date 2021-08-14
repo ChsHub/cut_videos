@@ -120,8 +120,8 @@ class Task(Thread):
         self._convert_videos(videos)
 
         # Set bar to full
-        self._set_total_frames(1)
-        self._set_current_frame_nr(1)
+        self._set_total_frames(10)
+        self._set_current_frame_nr(11)
 
         startfile(self._path)  # Open directory when finished
 

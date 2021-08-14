@@ -10,5 +10,4 @@ class ProgressBar(Gauge):
     def set_total_frames(self, total_frames: int):
         if total_frames <= 0:
             raise ValueError
-        self.SetValue(0)
-        self.SetRange(int(total_frames))
+        self.SetRange(int(total_frames * 1.1))  # Set frame count 10% higher
