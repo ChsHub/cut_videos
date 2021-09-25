@@ -36,7 +36,7 @@ class Window(Frame):
         self._end_input = TimeInput(self.panel, label='END')
         self._scale_input = SimpleInput(self.panel, label='Width:Height', initial='-1:-1')
         self._webm_input = SimpleInput(self.panel, label='WEBM Quality', initial='36')
-        self._framerate_input = SimpleInput(self.panel, label='INPUT FRAMES FRAMERATE', initial='23.976')
+        self._framerate_input = SimpleInput(self.panel, label='INPUT FRAMES FRAMERATE', initial='')
 
         # Create check inputs
         font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')

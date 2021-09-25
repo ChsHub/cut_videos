@@ -9,7 +9,7 @@ video_options = {
     'COPY': ('-map 0:v:0 -c:v copy', '%ext')}
 audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
                  'no audio': '-an',
-                 'Native format': '-c:a copy',
+                 'Native format': '-map 0:a:0 -c:a copy',
                  'mp3': '-c:a libmp3lame -qscale:a 3',
                  'aac': '-c:a aac -b:a 160k'}
 image_types = ('.bmp', '.png', '.jpg', '.webp')
