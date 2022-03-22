@@ -23,12 +23,11 @@ class Window(Frame):
         self.SetBackgroundColour(WHITE)
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
         loc = Icon()
-        loc.CopyFromBitmap(Bitmap('icon.ico', BITMAP_TYPE_ANY))
+        loc.CopyFromBitmap(Bitmap('icon.png', BITMAP_TYPE_ANY))
         self.SetIcon(loc)
         self.panel = Panel(self, EXPAND)
-        self.sizer = BoxSizer(VERTICAL)
-        self.sizer.Add(FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
-                                 file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file), 1, EXPAND)
+        self._sizer = BoxSizer(VERTICAL)
+        self._sizer.Add(FileInput(self.panel, text_button=file_input_button, callback=self._set_file, file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file), 1, EXPAND)
 
         #  Create Input fields
         self._start_input = TimeInput(self.panel, label=start_input_text)
@@ -38,26 +37,23 @@ class Window(Frame):
         self._framerate_input = SimpleInput(self.panel, label=frame_rate_text, initial='')
 
         # Create check inputs
-        self._audio_select = StandardSelection(parent=self.panel, options=list(audio_options.keys()),
-                                               callback=None, title='Audio codec')
-        self._video_select = StandardSelection(parent=self.panel, options=list(video_options.keys()),
-                                               callback=None, title='Video codec')
-        clone_time_input = FileInput(self.panel, text_button="Clone time", callback=self._clone_time,
-                                     file_type=file_exts, text_title="OPEN", text_open_file="File")
+        self._audio_select = StandardSelection(parent=self.panel, options=list(audio_options.keys()), callback=None, title=audio_codec_text)
+        self._video_select = StandardSelection(parent=self.panel, options=list(video_options.keys()), callback=None, title=video_codec_text)
+        clone_time_input = FileInput(self.panel, text_button=clone_time_text, callback=self._clone_time, file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file)
 
-        # Add inputs to self.sizer
-        self.sizer.Add(self._video_select, 1, EXPAND)
-        self.sizer.Add(self._audio_select, 1, EXPAND)
-        self.sizer.Add(clone_time_input, 1, EXPAND)
-        self.sizer.Add(self._start_input, 1, EXPAND)
-        self.sizer.Add(self._end_input, 1, EXPAND)
-        self.sizer.Add(self._scale_input, 1, EXPAND)
-        self.sizer.Add(self._webm_input, 1, EXPAND)
-        self.sizer.Add(self._framerate_input, 1, EXPAND)
+        # Add inputs to self._sizer
+        self._sizer.Add(self._video_select, 1, EXPAND)
+        self._sizer.Add(self._audio_select, 1, EXPAND)
+        self._sizer.Add(clone_time_input, 1, EXPAND)
+        self._sizer.Add(self._start_input, 1, EXPAND)
+        self._sizer.Add(self._end_input, 1, EXPAND)
+        self._sizer.Add(self._scale_input, 1, EXPAND)
+        self._sizer.Add(self._webm_input, 1, EXPAND)
+        self._sizer.Add(self._framerate_input, 1, EXPAND)
 
         # Add Button
-        self.sizer.Add(SimpleButton(self.panel, text_button='CUT', callback=self._submit_task), 1, EXPAND)
-        self.panel.SetSizer(self.sizer)
+        self._sizer.Add(SimpleButton(self.panel, text_button='CUT', callback=self._submit_task), 1, EXPAND)
+        self.panel.SetSizer(self._sizer)
 
     @property
     def start_time(self):
@@ -99,15 +95,13 @@ class Window(Frame):
 
     def _add_progress_bar(self):
         progress_bar = ProgressBar(self.panel, style=GA_HORIZONTAL)
-        self.sizer.Add(progress_bar, 0, EXPAND)
+        self._sizer.Add(progress_bar, 0, EXPAND)
         self.Size = (self.Size[0], self.Size[1] + 20)  # Enlarge window to fit new progress bar
         self.Update()
         return progress_bar
 
     def _submit_task(self, event):
-        info('START TASK')
-
-        if self._video_select.get_selection() == 'gif':
+        if self._video_select.get_selection() == gif_text:
             task = TaskGif
         else:
             task = Task

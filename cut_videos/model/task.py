@@ -14,7 +14,7 @@ from threading import Thread
 from PIL import Image
 from timerpy import Timer
 
-from cut_videos.resources.commands import audio_options, image_types, digits, input_ext, duration_command, fps_command
+from cut_videos.resources.commands import audio_options, image_types, digits, frame_input_ext, duration_command, fps_command
 from cut_videos.resources.paths import ffmpeg_path, ffprobe_path
 
 time_format = '%H:%M:%S.%f'
@@ -98,10 +98,10 @@ class Task(Thread):
     def _convert_frames(self, frames):
         if len(frames) > 1:
             with TemporaryDirectory() as temp_path:
-                self.copy_files(temp_path, frames, input_ext)
+                self.copy_files(temp_path, frames, frame_input_ext)
                 # Convert the frames
                 self._set_total_frames(len(frames))
-                self._convert(join(temp_path, '%%%sd' % digits + input_ext), frames[0])
+                self._convert(join(temp_path, '%%%sd' % digits + frame_input_ext), frames[0])
 
     def _convert_videos(self, videos):
         # Load videos
