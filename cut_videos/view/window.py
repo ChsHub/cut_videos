@@ -2,7 +2,7 @@ from logging import info
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Font, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    NORMAL, MODERN, GA_HORIZONTAL
+    NORMAL, MODERN, GA_HORIZONTAL, BLACK, Colour, WHITE
 from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.commands import video_options, audio_options
@@ -18,9 +18,10 @@ class Window(Frame):
     def __init__(self):
         self.files = []
         self.path = None
-
         # init window
         Frame.__init__(self, None, ID_ANY, "CUT", size=(688, 800))
+
+        self.SetBackgroundColour(WHITE)
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
         loc = Icon()
         loc.CopyFromBitmap(Bitmap('icon.ico', BITMAP_TYPE_ANY))
