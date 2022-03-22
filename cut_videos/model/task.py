@@ -14,8 +14,9 @@ from threading import Thread
 from PIL import Image
 from timerpy import Timer
 
-from cut_videos.resources.commands import audio_options, image_types, digits, frame_input_ext, duration_command, fps_command
-from cut_videos.resources.paths import ffmpeg_path, ffprobe_path
+from cut_videos.resources.commands import audio_options, image_types, digits, frame_input_ext, duration_command, \
+    fps_command, audio_codec_command, original_audio
+from cut_videos.resources.paths import ffmpeg_path
 
 time_format = '%H:%M:%S.%f'
 zero_time = '00:00:00.000'
@@ -76,7 +77,7 @@ class Task(Thread):
         self._webm_input = window.webm_input
         self._duration = None
         start_s, start_ms = self._start_time.split('.')
-        self.static_command = ['"%s"' % ffmpeg_path,
+        self.static_command = [ffmpeg_path,
                                '-sn',  # '-sn' Automatic stream selection
                                ' -r ' + window.input_framerate if window.input_framerate else '',
                                '-ss ' + start_s if self._start_time != zero_time else '',
@@ -93,7 +94,7 @@ class Task(Thread):
         i_file, _ = splitext(i_file)  # Remove ext
         start_t = _format_time(self._start_time)
         end_t = _format_time(self._end_time)
-        return '_%s_[%s_%s]' % (i_file, start_t, end_t)
+        return f'_{i_file}_[{start_t}_{end_t}]'
 
     def _convert_frames(self, frames):
         if len(frames) > 1:
@@ -128,13 +129,12 @@ class Task(Thread):
     def _get_audio_command(self, file):
         # TODO downmix
         # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
-        audio_codec = self._get_audio_codec(file)
-
+        audio_codec = getoutput(audio_codec_command % file)
         info('SELECTED: ' + self._audio_selection)
         info('INPUT: ' + audio_codec)
 
         # DON'T convert if selected codec is input codec
-        audio_command = 'Native format' if audio_codec == self._audio_selection else self._audio_selection
+        audio_command = original_audio if audio_codec == self._audio_selection else self._audio_selection
         return audio_options[audio_command]
 
     def _run_command(self, file, command, new_file):
@@ -159,7 +159,7 @@ class Task(Thread):
         command = [self.static_command % file,
                    self._get_audio_command(file),
                    command,
-                   '"%s"' % new_file]
+                   f'"{new_file}"']
         command = ' '.join(command)
         info(command)
 
@@ -185,13 +185,8 @@ class Task(Thread):
                     image = image.convert('RGB')
                 image.save(join(temp_path, file_name[-digits:] + ext), quality=100)
 
-    def _get_audio_codec(self, file):
-        command = ffprobe_path + ' -v error -select_streams a:0 -show_entries stream=codec_name \
-                        -of default=noprint_wrappers=1:nokey=1 "%s"' % file
-        return getoutput(command)
-
     def _get_video_fps(self, file):
-        output = getoutput(fps_command % (ffprobe_path, file))
+        output = getoutput(fps_command % file)
         if not output:
             return 1  # in case of audio
 
@@ -203,10 +198,9 @@ class Task(Thread):
             elif len(output) == 3:
                 return float(output[0]) / float(output[1].split('\n')[0])
             else:
-                exception('GET FPS FAIL %s' % str(output))
-                raise NotImplementedError
+                exception(f'GET FPS FAIL {output}')
 
-        error('UNKNOWN FRAMERATE VALUE %s' % output)
+        error(f'UNKNOWN FRAMERATE VALUE {output}')
         raise NotImplementedError
         # return float(24)
 
@@ -220,13 +214,13 @@ class Task(Thread):
         result = self._end_time
 
         if result == zero_time:  # Run probe to find video length
-            result = getoutput(duration_command % (ffprobe_path, file))
+            result = getoutput(duration_command % file)
 
         result = strptime(result, time_format) - strptime(self._start_time, time_format)
         return result.total_seconds()
 
     def _convert(self, i_file, o_file):
-        info('CONVERT %s to %s' % (i_file, o_file))
+        info(f'CONVERT {i_file} to {o_file}')
         command, suffix = self._video_selection
         suffix = suffix.replace('%ext', splitext(i_file)[-1])  # COPY keep same ext
         self._run_command(file=i_file,

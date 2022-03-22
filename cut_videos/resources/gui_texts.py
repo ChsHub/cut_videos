@@ -12,12 +12,14 @@ video_scale_text = 'Width:Height'
 clone_time_text = 'Clone time'
 video_codec_text = 'File format'
 audio_codec_text = 'Audio codec'
-# CODEC selections
+# Video format selections
 gif_text = 'gif'
 original_text = 'original'
 mp4_text = 'mp4'
 webm_text = 'webm'
 frames_text = 'frames'
+# Audio codec selections
+original_audio = 'original'
 
 # App needs to be started before creation of font
 from wx import App
