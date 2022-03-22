@@ -1,17 +1,17 @@
 from logging import info
 from re import findall
 
-from wx import Panel, BoxSizer, VERTICAL, Font, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    NORMAL, MODERN, GA_HORIZONTAL, BLACK, Colour, WHITE
+from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
+    GA_HORIZONTAL, WHITE
 from wxwidgets import FileInput, SimpleButton
 
-from cut_videos.commands import video_options, audio_options
 from cut_videos.model.task import Task, unformat_time
 from cut_videos.model.task_gif import TaskGif
+from cut_videos.resources.commands import video_options, audio_options
+from cut_videos.resources.gui_texts import *
+from cut_videos.resources.paths import file_exts
 from cut_videos.view.progress_bar import ProgressBar
 from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
-
-file_exts = "*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.m2ts;*.gif;*.png;*.jpg;"
 
 
 class Window(Frame):
@@ -19,8 +19,7 @@ class Window(Frame):
         self.files = []
         self.path = None
         # init window
-        Frame.__init__(self, None, ID_ANY, "CUT", size=(688, 800))
-
+        Frame.__init__(self, None, ID_ANY, window_title, size=(688, 800))
         self.SetBackgroundColour(WHITE)
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
         loc = Icon()
@@ -28,34 +27,28 @@ class Window(Frame):
         self.SetIcon(loc)
         self.panel = Panel(self, EXPAND)
         self.sizer = BoxSizer(VERTICAL)
-        self.sizer.Add(FileInput(self.panel, text_button="Open File", callback=self._set_file,
-                                 file_type=file_exts,
-                                 text_title="OPEN", text_open_file="File"), 1, EXPAND)
+        self.sizer.Add(FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
+                                 file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file), 1, EXPAND)
 
         #  Create Input fields
-        self._start_input = TimeInput(self.panel, label='START')
-        self._end_input = TimeInput(self.panel, label='END')
-        self._scale_input = SimpleInput(self.panel, label='Width:Height', initial='-1:-1')
-        self._webm_input = SimpleInput(self.panel, label='WEBM Quality', initial='36')
-        self._framerate_input = SimpleInput(self.panel, label='INPUT FRAMES FRAMERATE', initial='')
+        self._start_input = TimeInput(self.panel, label=start_input_text)
+        self._end_input = TimeInput(self.panel, label=end_input_text)
+        self._scale_input = SimpleInput(self.panel, label=video_scale_text, initial='-1:-1')
+        self._webm_input = SimpleInput(self.panel, label=webm_setting_text, initial='36')
+        self._framerate_input = SimpleInput(self.panel, label=frame_rate_text, initial='')
 
         # Create check inputs
-        font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-
         self._audio_select = StandardSelection(parent=self.panel, options=list(audio_options.keys()),
-                                               callback=None,
-                                               title='Audio codec')
-
+                                               callback=None, title='Audio codec')
         self._video_select = StandardSelection(parent=self.panel, options=list(video_options.keys()),
-                                               callback=None,
-                                               title='Video format')
+                                               callback=None, title='Video codec')
+        clone_time_input = FileInput(self.panel, text_button="Clone time", callback=self._clone_time,
+                                     file_type=file_exts, text_title="OPEN", text_open_file="File")
 
         # Add inputs to self.sizer
         self.sizer.Add(self._video_select, 1, EXPAND)
         self.sizer.Add(self._audio_select, 1, EXPAND)
-        self.sizer.Add(FileInput(self.panel, text_button="Clone time", callback=self._clone_time,
-                                 file_type=file_exts,
-                                 text_title="OPEN", text_open_file="File"), 1, EXPAND)
+        self.sizer.Add(clone_time_input, 1, EXPAND)
         self.sizer.Add(self._start_input, 1, EXPAND)
         self.sizer.Add(self._end_input, 1, EXPAND)
         self.sizer.Add(self._scale_input, 1, EXPAND)

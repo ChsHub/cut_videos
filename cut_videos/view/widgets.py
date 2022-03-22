@@ -3,6 +3,8 @@ from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, 
     NORMAL, MODERN, TextCtrl
 from wxwidgets import SimpleSizer, SimpleButton
 
+from cut_videos.resources.gui_texts import window_font
+
 
 class StandardSelection(Panel):
     def __init__(self, parent, callback, title, options):
@@ -12,10 +14,8 @@ class StandardSelection(Panel):
         text = StaticText(self, label=title)
         sizer.Add(text)
         self.selection = ComboBox(self, style=CB_DROPDOWN | CB_READONLY, choices=options)
-        font = Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas')
-        text.SetFont(font)
-        self.selection.SetFont(font)
-        # self.selection.SetFont(font)
+        text.SetFont(window_font)
+        self.selection.SetFont(window_font)
         self.selection.SetValue(options[0])
         if callback:
             self.selection.Bind(EVT_TEXT, lambda x: callback(self.selection.GetValue()))

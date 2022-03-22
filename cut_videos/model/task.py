@@ -14,8 +14,8 @@ from threading import Thread
 from PIL import Image
 from timerpy import Timer
 
-from cut_videos.commands import audio_options, image_types, digits, input_ext, duration_command, fps_command
-from cut_videos.paths import ffmpeg_path, ffprobe_path
+from cut_videos.resources.commands import audio_options, image_types, digits, input_ext, duration_command, fps_command
+from cut_videos.resources.paths import ffmpeg_path, ffprobe_path
 
 time_format = '%H:%M:%S.%f'
 zero_time = '00:00:00.000'
