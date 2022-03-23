@@ -84,8 +84,7 @@ class Task(Thread):
                                # Seeking on input file is faster https://trac.ffmpeg.org/wiki/Seeking
                                '-i "%s"',
                                '-ss 0.' + start_ms if self._start_time != zero_time else '',
-                               '-to ' + str(strptime(window.end_time, time_format)
-                                            - strptime(start_s + '.0', time_format))
+                               '-to ' + str(strptime(window.end_time, time_format) - strptime(start_s + '.0', time_format))
                                if self._end_time != zero_time else ''  # Cut to end if no input is given
                                ]
         self.static_command = ' '.join(self.static_command)
@@ -96,7 +95,8 @@ class Task(Thread):
         end_t = _format_time(self._end_time)
         return f'_{i_file}_[{start_t}_{end_t}]'
 
-    def _convert_frames(self, frames):
+    def _convert_frames(self):
+        frames = list(filter(lambda x: splitext(x)[-1].lower() in image_types, self._files))
         if len(frames) > 1:
             with TemporaryDirectory() as temp_path:
                 self.copy_files(temp_path, frames, frame_input_ext)
@@ -104,9 +104,9 @@ class Task(Thread):
                 self._set_total_frames(len(frames))
                 self._convert(join(temp_path, '%%%sd' % digits + frame_input_ext), frames[0])
 
-    def _convert_videos(self, videos):
+    def _convert_videos(self):
         # Load videos
-        for i_file in videos:
+        for i_file in filter(lambda x: splitext(x)[-1].lower() not in image_types, self._files):
             o_file = self.get_output_name(i_file)
             i_file = join(self._path, i_file)
             # Convert the video
@@ -114,11 +114,9 @@ class Task(Thread):
             self._convert(i_file, o_file)
 
     def run(self):
-        frames = list(filter(lambda x: splitext(x)[-1].lower() in image_types, self._files))
-        videos = list(filter(lambda x: splitext(x)[-1].lower() not in image_types, self._files))
         # Load frames
-        self._convert_frames(frames)
-        self._convert_videos(videos)
+        self._convert_frames()
+        self._convert_videos()
 
         # Set bar to full
         self._set_total_frames(10)
@@ -179,7 +177,7 @@ class Task(Thread):
 
     def copy_files(self, temp_path, files, ext):
         for i, file in enumerate(sorted(files)):
-            file_name = digits * "0" + str(i + 1)
+            file_name = digits * '0' + str(i + 1)
             with Image.open(join(self._path, file)) as image:
                 if image.mode != 'RGB':
                     image = image.convert('RGB')

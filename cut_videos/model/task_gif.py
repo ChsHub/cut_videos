@@ -1,10 +1,9 @@
-from logging import info, error
+from logging import error
 from os.path import exists
 from tempfile import TemporaryDirectory
 
-from timerpy import Timer
-
 from cut_videos.model.task import Task
+from cut_videos.resources.commands import palette_command, gif_command
 
 
 class TaskGif(Task):
@@ -13,11 +12,11 @@ class TaskGif(Task):
             # Generate palette
             palette = palette_dir + '/palette.png'
             self._run_command(file=i_file,
-                              command=' -vf "scale=<res>:flags=lanczos,palettegen"',
+                              command=palette_command,
                               new_file=palette)
             if not exists(palette):
                 error('No Palette')
                 return
             self._run_command(file=i_file + '" -i "' + palette,
-                              command=' -filter_complex "scale=<res>:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"',
+                              command=gif_command,
                               new_file=o_file + '.gif')
