@@ -4,7 +4,7 @@ from cut_videos.resources.paths import ffprobe_path
 video_options = {
     webm_text: ('-filter_complex "scale=<res>" -c:v libvpx-vp9 -speed 0 -crf <crf> -b:v 0 -threads 2 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25', ".webm"),
     mp4_text: ('-filter_complex "scale=<res>" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv420p', ".mp4"),
-    frames_text: ('', '/%03d.png'),
+    frames_text: ('', '/%06d.png'),
     gif_text: '',
     original_text: ('-map 0:v:0 -c:v copy', '%ext')}
 

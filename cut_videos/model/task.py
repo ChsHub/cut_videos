@@ -176,7 +176,7 @@ class Task(Thread):
         print(result)
 
     def copy_files(self, temp_path, files, ext):
-        for i, file in enumerate(sorted(files)):
+        for i, file in enumerate(sorted(files)): # , key=lambda x: int(splitext(x)[0])
             file_name = digits * '0' + str(i + 1)
             with Image.open(join(self._path, file)) as image:
                 if image.mode != 'RGB':
@@ -200,7 +200,6 @@ class Task(Thread):
 
         error(f'UNKNOWN FRAMERATE VALUE {output}')
         raise NotImplementedError
-        # return float(24)
 
     def _get_duration(self, file):
         """

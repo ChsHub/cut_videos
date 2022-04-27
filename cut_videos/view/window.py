@@ -23,7 +23,7 @@ class Window(Frame):
         self.SetBackgroundColour(WHITE)
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
         loc = Icon()
-        loc.CopyFromBitmap(Bitmap('icon.png', BITMAP_TYPE_ANY))
+        loc.CopyFromBitmap(Bitmap('icon.ico', BITMAP_TYPE_ANY))
         self.SetIcon(loc)
         self.panel = Panel(self, EXPAND)
         self._sizer = BoxSizer(VERTICAL)
