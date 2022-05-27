@@ -1,26 +1,27 @@
 from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, EXPAND, \
-    HORIZONTAL, \
-    NORMAL, MODERN, TextCtrl
+    HORIZONTAL, NORMAL, MODERN, TextCtrl, CENTER
 from wxwidgets import SimpleSizer, SimpleButton
 
-from cut_videos.resources.gui_texts import window_font
+from cut_videos.resources.gui_texts import window_font, text_color, h1_font
 
 
 class StandardSelection(Panel):
-    def __init__(self, parent, callback, title, options):
+    def __init__(self, parent, callback, title, options, font):
         super().__init__(parent)
 
-        sizer = BoxSizer(VERTICAL)
-        text = StaticText(self, label=title)
-        sizer.Add(text)
-        self.selection = ComboBox(self, style=CB_DROPDOWN | CB_READONLY, choices=options)
-        text.SetFont(window_font)
-        self.selection.SetFont(window_font)
-        self.selection.SetValue(options[0])
-        if callback:
-            self.selection.Bind(EVT_TEXT, lambda x: callback(self.selection.GetValue()))
-        sizer.Add(self.selection, 1, EXPAND)
-        self.SetSizer(sizer)
+        with SimpleSizer(self, VERTICAL) as sizer:
+            text = StaticText(self, label=title)
+            text.SetFont(font)
+            sizer.Add(text)
+            # DROPDOWN
+            self.selection = ComboBox(self, style=CB_DROPDOWN | CB_READONLY, choices=options)
+            self.selection.SetFont(font)
+            self.selection.SetForegroundColour(text_color)
+            self.selection.SetOwnForegroundColour(text_color)
+            self.selection.SetValue(options[0])
+            if callback:
+                self.selection.Bind(EVT_TEXT, lambda x: callback(self.selection.GetValue()))
+            sizer.Add(self.selection, 1, EXPAND)
 
     def get_selection(self):
         return self.selection.GetValue()
@@ -33,12 +34,12 @@ class SimpleInput(Panel):
 
         sizer = BoxSizer(HORIZONTAL)
         self._text_input = TextCtrl(self)
-        self._text_input.SetFont(Font(40, MODERN, NORMAL, NORMAL, False, u'Consolas'))
+        self._text_input.SetFont(h1_font)
         self._text_input.SetValue(initial)
         sizer.Add(self._text_input, 1, EXPAND)
 
         text = StaticText(self, label=label)
-        text.SetFont(Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas'))
+        text.SetFont(h1_font)
         sizer.Add(text, 1, EXPAND)
         self.SetSizer(sizer)
 
@@ -87,14 +88,15 @@ class TimeInput(Panel):
 
         self._digits = []
         with SimpleSizer(self, HORIZONTAL) as sizer:
+            # Add time elements
             for s in [':', ':', '.', label]:
                 for i in range(2):
                     self._digits.append(DigitInput(self))
-                    sizer.Add(self._digits[-1], 0)
+                    sizer.Add(self._digits[-1], proportion=0, flag=CENTER)
 
                 text = StaticText(self, label=s)
-                text.SetFont(Font(20, MODERN, NORMAL, NORMAL, False, u'Consolas'))
-                sizer.Add(text, 1)
+                text.SetFont(h1_font)
+                sizer.Add(text, proportion=0, flag=CENTER)
 
         self._digits[2].mod = 6
         self._digits[4].mod = 6

@@ -17,6 +17,7 @@ gif_text = 'gif'
 original_text = 'original'
 mp4_text = 'mp4'
 webm_text = 'webm'
+webp_text = 'webp'
 frames_text = 'frames'
 # Audio codec selections
 original_audio = 'original'
@@ -25,3 +26,10 @@ original_audio = 'original'
 from wx import App
 app = App(False)
 window_font = Font(20, MODERN, NORMAL, NORMAL, False, 'Consolas')
+h1_font = Font(40, MODERN, NORMAL, NORMAL, False, u'Consolas')
+background_color =  ( 35,  35,  40)  # (50, 50, 50, 255)
+selected_color =    ( 70,  70,  85)
+hover_color =       ( 70,  70,  70)  # TODO Set mouse over color
+text_color =        (255, 255, 255)
+text_color_header = (100, 100, 100)
+icon_path = 'icon.ico'

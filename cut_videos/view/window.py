@@ -1,8 +1,7 @@
-from logging import info
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    GA_HORIZONTAL, WHITE
+    GA_HORIZONTAL
 from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.model.task import Task, unformat_time
@@ -20,28 +19,36 @@ class Window(Frame):
         self.path = None
         # init window
         Frame.__init__(self, None, ID_ANY, window_title, size=(688, 800))
-        self.SetBackgroundColour(WHITE)
+        self.SetBackgroundColour(background_color)
         self.Bind(EVT_CLOSE, lambda x: self.Destroy())
-        loc = Icon()
-        loc.CopyFromBitmap(Bitmap('icon.ico', BITMAP_TYPE_ANY))
-        self.SetIcon(loc)
+        # ICON
+        icon = Icon()
+        icon.CopyFromBitmap(Bitmap(icon_path, BITMAP_TYPE_ANY))
+        self.SetIcon(icon)
+
         self.panel = Panel(self, EXPAND)
         self._sizer = BoxSizer(VERTICAL)
-        self._sizer.Add(FileInput(self.panel, text_button=file_input_button, callback=self._set_file, file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file), 1, EXPAND)
+        file_input = FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
+                               file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file,
+                               text_color=text_color, font=window_font)
 
-        #  Create Input fields
+        # Create Input fields
         self._start_input = TimeInput(self.panel, label=start_input_text)
         self._end_input = TimeInput(self.panel, label=end_input_text)
         self._scale_input = SimpleInput(self.panel, label=video_scale_text, initial='-1:-1')
         self._webm_input = SimpleInput(self.panel, label=webm_setting_text, initial='36')
         self._framerate_input = SimpleInput(self.panel, label=frame_rate_text, initial='')
-
+        button = SimpleButton(self.panel, text_button='CUT', callback=self._submit_task)
         # Create check inputs
-        self._audio_select = StandardSelection(parent=self.panel, options=list(audio_options.keys()), callback=None, title=audio_codec_text)
-        self._video_select = StandardSelection(parent=self.panel, options=list(video_options.keys()), callback=None, title=video_codec_text)
-        clone_time_input = FileInput(self.panel, text_button=clone_time_text, callback=self._clone_time, file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file)
+        self._audio_select = StandardSelection(parent=self.panel, options=list(audio_options.keys()), callback=None,
+                                               title=audio_codec_text, font=window_font)
+        self._video_select = StandardSelection(parent=self.panel, options=list(video_options.keys()), callback=None,
+                                               title=video_codec_text, font=window_font)
+        clone_time_input = FileInput(self.panel, text_button=clone_time_text, callback=self._clone_time,
+                                     file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file)
 
         # Add inputs to self._sizer
+        self._sizer.Add(file_input, 1, EXPAND)
         self._sizer.Add(self._video_select, 1, EXPAND)
         self._sizer.Add(self._audio_select, 1, EXPAND)
         self._sizer.Add(clone_time_input, 1, EXPAND)
@@ -50,10 +57,15 @@ class Window(Frame):
         self._sizer.Add(self._scale_input, 1, EXPAND)
         self._sizer.Add(self._webm_input, 1, EXPAND)
         self._sizer.Add(self._framerate_input, 1, EXPAND)
+        self._sizer.Add(button, 1, EXPAND)
 
-        # Add Button
-        self._sizer.Add(SimpleButton(self.panel, text_button='CUT', callback=self._submit_task), 1, EXPAND)
         self.panel.SetSizer(self._sizer)
+        queue = list(self.GetChildren())
+        while queue:
+            child = queue.pop()
+            queue += list(child.GetChildren())
+            child.SetBackgroundColour(background_color)
+            child.SetForegroundColour(text_color)
 
     @property
     def start_time(self):
