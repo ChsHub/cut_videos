@@ -1,7 +1,7 @@
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    GA_HORIZONTAL
+    GA_HORIZONTAL, CheckBox
 from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.model.task import Task, unformat_time
@@ -38,6 +38,8 @@ class Window(Frame):
         self._scale_input = SimpleInput(self.panel, label=video_scale_text, initial='-1:-1')
         self._webm_input = SimpleInput(self.panel, label=webm_setting_text, initial='36')
         self._framerate_input = SimpleInput(self.panel, label=frame_rate_text, initial='')
+        self._hard_sub_check = CheckBox(self.panel, label='HARDSUBS')
+        self._hard_sub_check.SetFont(font=h1_font)
         button = SimpleButton(self.panel, text_button='CUT', callback=self._submit_task)
         # Create check inputs
         self._audio_select = StandardSelection(parent=self.panel, options=list(audio_options.keys()), callback=None,
@@ -57,6 +59,7 @@ class Window(Frame):
         self._sizer.Add(self._scale_input, 1, EXPAND)
         self._sizer.Add(self._webm_input, 1, EXPAND)
         self._sizer.Add(self._framerate_input, 1, EXPAND)
+        self._sizer.Add(self._hard_sub_check, 1)
         self._sizer.Add(button, 1, EXPAND)
 
         self.panel.SetSizer(self._sizer)
@@ -94,6 +97,10 @@ class Window(Frame):
     @property
     def webm_input(self):
         return self._webm_input.get_value()
+
+    @property
+    def hardsub(self):
+        return self._hard_sub_check.GetValue()
 
     def _clone_time(self, path, files):
         data = files[-1]

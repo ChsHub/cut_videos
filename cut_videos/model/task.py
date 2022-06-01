@@ -76,6 +76,7 @@ class Task(Thread):
         self._scale_input = window.scale_input
         self._webm_input = window.webm_input
         self._duration = None
+        self.hardsub = window.hardsub
         start_s, start_ms = self._start_time.split('.')
         self.static_command = [ffmpeg_path,
                                '-sn',  # '-sn' Automatic stream selection
@@ -84,8 +85,10 @@ class Task(Thread):
                                # Seeking on input file is faster https://trac.ffmpeg.org/wiki/Seeking
                                '-i "%s"',
                                '-ss 0.' + start_ms if self._start_time != zero_time else '',
-                               '-to ' + str(strptime(window.end_time, time_format) - strptime(start_s + '.0', time_format))
-                               if self._end_time != zero_time else ''  # Cut to end if no input is given
+                               '-to ' + str(
+                                   strptime(window.end_time, time_format) - strptime(start_s + '.0', time_format))
+                               if self._end_time != zero_time else '',  # Cut to end if no input is given
+
                                ]
         self.static_command = ' '.join(self.static_command)
 
@@ -155,6 +158,7 @@ class Task(Thread):
             mkdir(directory)
 
         command = [self.static_command % file,
+                   f'-vf subtitles="{file}"' if self.hardsub else '',
                    self._get_audio_command(file),
                    command,
                    f'"{new_file}"']
@@ -167,6 +171,10 @@ class Task(Thread):
             self._monitor_process(process)
 
     def _monitor_process(self, process):
+        """
+        Read ffmpeg output
+        :param process: process object
+        """
         reader = io.TextIOWrapper(process.stdout, encoding='UTF-8', newline='\r')
         while line := reader.readline():
             if data := findall(r'frame=\s*(\d+)\s+', line):
@@ -176,7 +184,7 @@ class Task(Thread):
         print(result)
 
     def copy_files(self, temp_path, files, ext):
-        for i, file in enumerate(sorted(files)): # , key=lambda x: int(splitext(x)[0])
+        for i, file in enumerate(sorted(files)):  # , key=lambda x: int(splitext(x)[0])
             file_name = digits * '0' + str(i + 1)
             with Image.open(join(self._path, file)) as image:
                 if image.mode != 'RGB':
