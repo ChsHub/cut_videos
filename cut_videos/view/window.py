@@ -5,7 +5,6 @@ from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon
 from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.model.task import Task, unformat_time
-from cut_videos.model.task_gif import TaskGif
 from cut_videos.resources.commands import video_options, audio_options
 from cut_videos.resources.gui_texts import *
 from cut_videos.resources.paths import file_exts
@@ -80,7 +79,7 @@ class Window(Frame):
 
     @property
     def video_selection(self):
-        return video_options[self._video_select.get_selection()]
+        return self._video_select.get_selection()
 
     @property
     def audio_selection(self):
@@ -120,10 +119,15 @@ class Window(Frame):
         return progress_bar
 
     def _submit_task(self, event):
-        if self._video_select.get_selection() == gif_text:
-            task = TaskGif
-        else:
-            task = Task
-
         bar = self._add_progress_bar()
-        task(self, bar).start()
+        Task(self.input_framerate,
+             self.start_time,
+             self.end_time,
+             self.hardsub,
+             self.webm_input,
+             self.scale_input,
+             self.audio_selection,
+             self.video_selection,
+             self.path,
+             self.files.copy(),
+             bar)

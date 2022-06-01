@@ -6,7 +6,6 @@ video_options = {
     mp4_text: ('-filter_complex "scale=<res>" -c:v libx264 -profile:v main -level:v 3.2 -pix_fmt yuv420p', ".mp4"),
     frames_text: ('', '/%06d.png'),
     webp_text: ('-filter_complex "scale=<res>" -c:v libwebp -lossless 0 -compression_level 3 -q:v 70 -loop 0 -preset picture -vsync 0', '.webp'),
-    gif_text: '',
     original_text: ('-map 0:v:0 -c:v copy', '%ext')}
 
 audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
@@ -17,8 +16,6 @@ audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
 
 image_types = ('.bmp', '.png', '.jpg', '.webp')
 
-palette_command = ' -vf "scale=<res>:flags=lanczos,palettegen"'
-gif_command = ' -filter_complex "scale=<res>:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"'
 audio_codec_command = f'{ffprobe_path} -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "%s"'
 duration_command = f'{ffprobe_path} -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal "%s"'
 fps_command = f'{ffprobe_path} -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate "%s"'
