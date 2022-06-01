@@ -8,7 +8,7 @@ from pathlib import Path
 from re import findall, error
 from subprocess import Popen, PIPE, STDOUT, getoutput
 from tempfile import TemporaryDirectory
-from threading import Thread
+from threading import Thread, Semaphore
 
 from PIL import Image
 from timerpy import Timer
@@ -65,21 +65,24 @@ class Task(Thread):
     Run convesion command in thread executor
     """
 
-    def __init__(self,
-                 input_framerate,
-                 start_time,
-                 end_time,
-                 hardsub,
-                 webm_input,
-                 scale_input,
-                 audio_selection,
-                 video_selection,
-                 path,
-                 files,
+    def __init__(self, input_framerate: str,
+                 start_time: str,
+                 end_time: str,
+                 hardsub: int,
+                 webm_input: str,
+                 scale_input: str,
+                 audio_selection: str,
+                 video_selection: str,
+                 path: str,
+                 files: list,
+                 remove_task: callable,
                  bar):
-        Thread.__init__(self, daemon=True)
+        Thread.__init__(self)
+        # GUI
         self._set_total_frames = bar.set_total_frames
         self._set_current_frame_nr = bar.set_current_frame_nr
+        self._remove_task = remove_task
+
         self.input_framerate = input_framerate
         self.start_time = start_time
         self.end_time = end_time
@@ -90,7 +93,10 @@ class Task(Thread):
         self.video_selection = video_selection
         self.path = path
         self.files = files
-
+        self._process = None
+        self._current_file = None
+        self._closed = False
+        self._closed_semaphore = Semaphore(1)
         self.start()
 
     def run(self):
@@ -102,11 +108,14 @@ class Task(Thread):
         self._convert_frames()
         self._convert_videos()
 
+        if self._closed:
+            return
         # Set bar to full
         self._set_total_frames(10)
         self._set_current_frame_nr(11)
         # Open directory when finished
         startfile(self.path)
+        self._remove_task(self)
 
     def _convert_frames(self):
         """
@@ -141,43 +150,66 @@ class Task(Thread):
         :param command: Conversion command
         :param file_output: Output file
         """
+        with self._closed_semaphore:
+            if self._closed:
+                return
+            # Check new file_input
+            command, suffix = video_options[self.video_selection]
+            suffix = suffix.replace('%ext', file_input.suffix)  # COPY keep same ext
+            file_output += suffix
+            info(f'CONVERT {file_input} to {file_output}')
 
-        # Check new file_input
-        command, suffix = video_options[self.video_selection]
-        suffix = suffix.replace('%ext', file_input.suffix)  # COPY keep same ext
-        file_output += suffix
-        info(f'CONVERT {file_input} to {file_output}')
+            file_output = Path(self.path, file_output)
+            directory = file_output.parent  # Output directory for frames
+            if file_output.exists() or ((self.video_selection == frames_text) and directory.exists()):
+                info(f'ALREADY EXISTS: {file_output}')
+                return
+            directory.mkdir(exist_ok=True)
 
-        file_output = Path(self.path, file_output)
-        directory = file_output.parent  # Output directory for frames
-        if file_output.exists() or ((self.video_selection == frames_text) and directory.exists()):
-            info(f'ALREADY EXISTS: {file_output}')
-            return
-        directory.mkdir(exist_ok=True)
+            if not file_input.exists():
+                raise FileNotFoundError
 
-        start_s, start_ms = self.start_time.split('.')
-        command = [ffmpeg_path,
-                   '-sn',  # '-sn' Automatic stream selection
-                   ' -r ' + self.input_framerate if self.input_framerate else '',
-                   '-ss ' + start_s if self.start_time != zero_time else '',
-                   # Seeking on input file_input is faster https://trac.ffmpeg.org/wiki/Seeking
-                   f'-i "{file_input}"',
-                   '-ss 0.' + start_ms if self.start_time != zero_time else '',
-                   '-to ' + str(strptime(self.end_time, time_format) - strptime(start_s + '.0', time_format))
-                   if self.end_time != zero_time else '',  # Cut to end if no input is given
-                   f'-vf subtitles="{file_input}"' if self.hardsub else '',
-                   audio_options[
-                       original_audio if getoutput(
-                           audio_codec_command % file_input) == self.audio_selection else self.audio_selection],
-                   # Don't convert audio if selected is same as input
-                   command.replace('<crf>', self.webm_input).replace('<res>', self.scale_input)
-                   ]
-        info(' '.join(command))
+            start_s, start_ms = self.start_time.split('.')
+            command = [ffmpeg_path,
+                       '-sn',  # '-sn' Automatic stream selection
+                       ' -r ' + self.input_framerate if self.input_framerate else '',
+                       '-ss ' + start_s if self.start_time != zero_time else '',
+                       # Seeking on input file_input is faster https://trac.ffmpeg.org/wiki/Seeking
+                       f'-i "{file_input}"',
+                       '-ss 0.' + start_ms if self.start_time != zero_time else '',
+                       '-to ' + str(strptime(self.end_time, time_format) - strptime(start_s + '.0', time_format))
+                       if self.end_time != zero_time else '',  # Cut to end if no input is given
+                       audio_options[
+                           original_audio if getoutput(
+                               audio_codec_command % file_input) == self.audio_selection else self.audio_selection],
+                       # Don't convert audio if selected is same as input
+                       command.replace('<crf>', self.webm_input).replace('<res>', self.scale_input),
+                       f'-subtitles="{file_input}"' if self.hardsub else '',
+                       f'{file_output}'
+                       ]
+            info(command)
 
-        # Start process
-        with Timer('CONVERT'):
-            process = Popen(command, shell=False, stdout=PIPE, stderr=STDOUT)
-            self._monitor_process(process)
+            # Start process
+            with Timer('CONVERT'):
+                self._current_file = file_output
+                self._process = Popen(' '.join(command), shell=False, stdout=PIPE, stderr=STDOUT)
+        self._monitor_process(self._process)
+        with self._closed_semaphore:
+            self._current_file = None
+
+    def stop(self):
+        """
+        Stop active converter thread, delete unfinished file
+        """
+        with self._closed_semaphore:
+            if self._closed:
+                return
+            self._closed = True
+
+            if self._process:
+                self._process.terminate()
+                self._process.wait()  # Wait for termination
+                self._current_file.unlink()
 
     def _monitor_process(self, process):
         """
@@ -190,7 +222,7 @@ class Task(Thread):
                 self._set_current_frame_nr(data[0])
 
         result = process.communicate()
-        print(result)
+        info(f'FFMPEG RETURN: {result}')
 
     def _copy_files(self, temp_path: str, files: list, ext):
         """

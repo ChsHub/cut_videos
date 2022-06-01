@@ -1,8 +1,8 @@
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    GA_HORIZONTAL, CheckBox
-from wxwidgets import FileInput, SimpleButton
+    GA_HORIZONTAL, CheckBox, HORIZONTAL
+from wxwidgets import FileInput, SimpleButton, SimpleSizer
 
 from cut_videos.model.task import Task, unformat_time
 from cut_videos.resources.commands import video_options, audio_options
@@ -16,10 +16,10 @@ class Window(Frame):
     def __init__(self):
         self.files = []
         self.path = None
+        self._active_tasks = []
         # init window
-        Frame.__init__(self, None, ID_ANY, window_title, size=(688, 800))
+        Frame.__init__(self, None, ID_ANY, window_title, size=(688, 900))
         self.SetBackgroundColour(background_color)
-        self.Bind(EVT_CLOSE, lambda x: self.Destroy())
         # ICON
         icon = Icon()
         icon.CopyFromBitmap(Bitmap(icon_path, BITMAP_TYPE_ANY))
@@ -34,8 +34,9 @@ class Window(Frame):
         # Create Input fields
         self._start_input = TimeInput(self.panel, label=start_input_text)
         self._end_input = TimeInput(self.panel, label=end_input_text)
-        self._scale_input = SimpleInput(self.panel, label=video_scale_text, initial='-1:-1')
         self._webm_input = SimpleInput(self.panel, label=webm_setting_text, initial='36')
+        self._width_input = SimpleInput(self.panel, label=video_width_text, initial='')
+        self._height_input = SimpleInput(self.panel, label=video_height_text, initial='')
         self._framerate_input = SimpleInput(self.panel, label=frame_rate_text, initial='')
         self._hard_sub_check = CheckBox(self.panel, label='HARDSUBS')
         self._hard_sub_check.SetFont(font=h1_font)
@@ -55,8 +56,9 @@ class Window(Frame):
         self._sizer.Add(clone_time_input, 1, EXPAND)
         self._sizer.Add(self._start_input, 1, EXPAND)
         self._sizer.Add(self._end_input, 1, EXPAND)
-        self._sizer.Add(self._scale_input, 1, EXPAND)
         self._sizer.Add(self._webm_input, 1, EXPAND)
+        self._sizer.Add(self._width_input, 1, EXPAND)
+        self._sizer.Add(self._height_input, 1, EXPAND)
         self._sizer.Add(self._framerate_input, 1, EXPAND)
         self._sizer.Add(self._hard_sub_check, 1)
         self._sizer.Add(button, 1, EXPAND)
@@ -68,6 +70,13 @@ class Window(Frame):
             queue += list(child.GetChildren())
             child.SetBackgroundColour(background_color)
             child.SetForegroundColour(text_color)
+
+        self.Bind(EVT_CLOSE, self.on_close)
+
+    def on_close(self, event):
+        self.Destroy()
+        for task in self._active_tasks:
+            task.stop()
 
     @property
     def start_time(self):
@@ -91,7 +100,9 @@ class Window(Frame):
 
     @property
     def scale_input(self):
-        return self._scale_input.get_value()
+        width = self._width_input.get_value()
+        height = self._height_input.get_value()
+        return f'{width if width else -1}:{height if height else -1}'
 
     @property
     def webm_input(self):
@@ -118,16 +129,21 @@ class Window(Frame):
         self.Update()
         return progress_bar
 
+    def remove_task(self, task):
+        self._active_tasks.remove(task)
+
     def _submit_task(self, event):
         bar = self._add_progress_bar()
-        Task(self.input_framerate,
-             self.start_time,
-             self.end_time,
-             self.hardsub,
-             self.webm_input,
-             self.scale_input,
-             self.audio_selection,
-             self.video_selection,
-             self.path,
-             self.files.copy(),
-             bar)
+        self._active_tasks.append(
+            Task(self.input_framerate,
+                 self.start_time,
+                 self.end_time,
+                 self.hardsub,
+                 self.webm_input,
+                 self.scale_input,
+                 self.audio_selection,
+                 self.video_selection,
+                 self.path,
+                 self.files.copy(),
+                 self.remove_task,
+                 bar))
