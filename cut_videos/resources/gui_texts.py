@@ -14,11 +14,11 @@ clone_time_text = 'Clone time'
 video_codec_text = 'File format'
 audio_codec_text = 'Audio codec'
 # Video format selections
-gif_text = 'gif'
 original_text = 'original'
 mp4_text = 'mp4'
 webm_text = 'webm'
 webp_text = 'webp'
+png_text = 'apng'
 frames_text = 'frames'
 # Audio codec selections
 original_audio = 'original'

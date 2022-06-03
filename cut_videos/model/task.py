@@ -1,11 +1,9 @@
 import io
 import locale
-from datetime import datetime
 from logging import info, exception
 from os import startfile
-from os.path import splitext
 from pathlib import Path
-from re import findall, error
+from re import error
 from subprocess import Popen, PIPE, STDOUT, getoutput
 from tempfile import TemporaryDirectory
 from threading import Thread, Semaphore
@@ -17,47 +15,7 @@ from cut_videos.resources.commands import audio_options, image_types, digits, fr
     fps_command, audio_codec_command, original_audio, video_options
 from cut_videos.resources.gui_texts import frames_text
 from cut_videos.resources.paths import ffmpeg_path
-
-strptime = datetime.strptime
-time_format = '%H:%M:%S.%f'
-zero_time = '00:00:00.000'
-
-
-def unformat_time(time: str) -> str:
-    """
-    Convert stort time string to long form (digits only)
-    :param time: Short time string
-    :return: Long format time 8 digit string
-    """
-    if '.' in time:
-        time, milli = time.split('.')
-        milli += (2 - len(milli)) * '0'  # Add trailing zeroes
-    else:
-        milli = '00'
-
-    # Add redundant zeroes
-    time = time.split('-')
-    while len(time) < 3:
-        time = ['00'] + time
-    for i, t in enumerate(time):
-        time[i] = (2 - len(t)) * '0' + t
-
-    return ''.join(time) + milli
-
-
-def _format_time(time: str) -> str:
-    """
-    Format time to shortened human readable form
-    :param time: Time string in long form
-    :return: Time string in shortened form
-    """
-    time, milli = splitext(time)
-    time = findall(r'([1-9]\d?)|00', time)
-    time = '-'.join(time)
-    time = time.lstrip('-')
-    milli = milli.rstrip('0')
-    milli = milli.rstrip('.')
-    return time + milli
+from cut_videos.model.time_format import *
 
 
 class Task(Thread):
@@ -138,7 +96,7 @@ class Task(Thread):
             # Convert the video
             self._set_total_frames(self._get_duration(file_input) * self._get_video_fps(file_input))
             self._run_command(file_input,
-                              f'_{file_input.stem}_[{_format_time(self.start_time)}_{_format_time(self.end_time)}]')
+                              f'_{file_input.stem}_[{format_time(self.start_time)}_{format_time(self.end_time)}]')
 
     # TODO downmix
     # https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
@@ -185,9 +143,10 @@ class Task(Thread):
                        # Don't convert audio if selected is same as input
                        command.replace('<crf>', self.webm_input).replace('<res>', self.scale_input),
                        f'-subtitles="{file_input}"' if self.hardsub else '',
-                       f'{file_output}'
+                       f'"{file_output}"'
                        ]
             info(command)
+            info(' '.join(command))
 
             # Start process
             with Timer('CONVERT'):
