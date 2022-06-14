@@ -4,7 +4,8 @@ from re import findall
 
 strptime = datetime.strptime
 time_format = '%H:%M:%S.%f'
-zero_time = '00:00:00.000'
+zero_time = '00:00:00.00'
+
 
 def unformat_time(time: str) -> str:
     """
@@ -12,6 +13,8 @@ def unformat_time(time: str) -> str:
     :param time: Short time string
     :return: Long format time 8 digit string
     """
+    if time is None:
+        return zero_time.replace(':', '')
     if '.' in time:
         time, milli = time.split('.')
         milli += (2 - len(milli)) * '0'  # Add trailing zeroes
