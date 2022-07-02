@@ -124,19 +124,17 @@ class Task(Thread):
                 return
             directory.mkdir(exist_ok=True)
 
-            if not file_input.exists():
-                raise FileNotFoundError
-
             start_s, start_ms = self.start_time.split('.')
+            info(' '.join(command))
             command = [ffmpeg_path,
-                       '-sn',  # '-sn' Automatic stream selection
+                       '-sn' if not self.input_framerate else '',  # '-sn' Automatic stream selection
                        ' -r ' + self.input_framerate if self.input_framerate else '',
-                       '-ss ' + start_s if self.start_time != zero_time else '',
+                       '-ss ' + start_s if self.start_time != zero_time and not self.input_framerate else '',
                        # Seeking on input file_input is faster https://trac.ffmpeg.org/wiki/Seeking
                        f'-i "{file_input}"',
-                       '-ss 0.' + start_ms if self.start_time != zero_time else '',
+                       '-ss 0.' + start_ms if self.start_time != zero_time  and not self.input_framerate else '',
                        '-to ' + str(strptime(self.end_time, time_format) - strptime(start_s + '.0', time_format))
-                       if self.end_time != zero_time else '',  # Cut to end if no input is given
+                       if self.end_time != zero_time and not self.input_framerate else '',  # Cut to end if no input is given
                        audio_options[
                            original_audio if getoutput(
                                audio_codec_command % file_input) == self.audio_selection else self.audio_selection],
@@ -145,8 +143,6 @@ class Task(Thread):
                        f'-subtitles="{file_input}"' if self.hardsub else '',
                        f'"{file_output}"'
                        ]
-            info(command)
-            info(' '.join(command))
 
             # Start process
             with Timer('CONVERT'):
