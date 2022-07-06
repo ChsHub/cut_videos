@@ -4,7 +4,7 @@ from re import findall
 
 strptime = datetime.strptime
 time_format = '%H:%M:%S.%f'
-zero_time = '00:00:00.00'
+zero_time = '00:00:00.000'
 
 
 def unformat_time(time: str) -> str:
