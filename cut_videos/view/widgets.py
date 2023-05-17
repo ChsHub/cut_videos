@@ -1,3 +1,5 @@
+from logging import info
+
 from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, BoxSizer, VERTICAL, Font, EXPAND, \
     HORIZONTAL, NORMAL, MODERN, TextCtrl, CENTER
 from wxwidgets import SimpleSizer, SimpleButton
@@ -89,26 +91,27 @@ class TimeInput(Panel):
         self._digits = []
         with SimpleSizer(self, HORIZONTAL) as sizer:
             # Add time elements
-            for s in [':', ':', '.', label]:
-                for i in range(2):
+            for s in list('dd:dd:dd.ddd') + [label]:
+                if s == 'd':
                     self._digits.append(DigitInput(self))
                     sizer.Add(self._digits[-1], proportion=0, flag=CENTER)
+                else:
+                    text = StaticText(self, label=s)
+                    text.SetFont(h1_font)
+                    sizer.Add(text, proportion=0, flag=CENTER)
 
-                text = StaticText(self, label=s)
-                text.SetFont(h1_font)
-                sizer.Add(text, proportion=0, flag=CENTER)
-
+        # Set modulo for leading digits of seconds and minutes
         self._digits[2].mod = 6
         self._digits[4].mod = 6
 
     def get_value(self):
         digits = list(map(lambda x: x.get_value(), self._digits))
         digits = ''.join(digits)
-        digits = digits[:2] + ':' + digits[2:4] + ':' + digits[4:6] + '.' + digits[6:] + '0'
-        print(digits)
+        digits = digits[:2] + ':' + digits[2:4] + ':' + digits[4:6] + '.' + digits[7:]
+        info(f"Digits: {digits}")
         return digits
 
-    def set_value(self, digits):
+    def set_value(self, digits: str):
         if not len(self._digits) == len(digits):
             raise ValueError
         for digit_input, digit in zip(self._digits, digits):

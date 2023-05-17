@@ -42,8 +42,7 @@ class Task(Thread):
         self._remove_task = remove_task
 
         self.input_framerate = input_framerate
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start_time, self.end_time = list(sorted((start_time, end_time)))
         self.hardsub = hardsub
         self.webm_input = webm_input
         self.scale_input = scale_input

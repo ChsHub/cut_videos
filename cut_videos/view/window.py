@@ -1,8 +1,9 @@
+from logging import error
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    GA_HORIZONTAL, CheckBox, HORIZONTAL
-from wxwidgets import FileInput, SimpleButton, SimpleSizer
+    GA_HORIZONTAL, CheckBox
+from wxwidgets import FileInput, SimpleButton
 
 from cut_videos.model.task import Task, unformat_time
 from cut_videos.resources.commands import video_options, audio_options
@@ -28,8 +29,8 @@ class Window(Frame):
         self.panel = Panel(self, EXPAND)
         self._sizer = BoxSizer(VERTICAL)
         file_input = FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
-                               file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file,
-                               text_color=text_color, font=window_font)
+                               file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file, )
+        # text_color=text_color, font=window_font) TODO
 
         # Create Input fields
         self._start_input = TimeInput(self.panel, label=start_input_text)
@@ -113,10 +114,20 @@ class Window(Frame):
         return self._hard_sub_check.GetValue()
 
     def _clone_time(self, path, files):
-        data = files[-1]
-        start, end = findall(r"\[([\d+|\-|\.]+)?_([\d+|\-|\.]+)?\]", data)[-1]
-        self._start_input.set_value(unformat_time(start))
-        self._end_input.set_value(unformat_time(end))
+        if len(files) == 1:  # Clone from video
+            data = files[0]
+            start, end = findall(r"\[([\d+|\-|\.]+)?_([\d+|\-|\.]+)?\]", data)[-1]
+            start = unformat_time(start)
+            end = unformat_time(end)
+        elif len(files) == 2:  # Clone from screenshots
+            start = findall(r"(\d{6}\.\d{3})", files[0])[-1].replace('.', '')
+            end   = findall(r"(\d{6}\.\d{3})", files[1])[-1].replace('.', '')
+            start, end = list(sorted((start, end)))
+        else:
+            error("Too many input files for Time Cloning")
+            return
+        self._start_input.set_value(start)
+        self._end_input.set_value(end)
 
     def _set_file(self, path, files):
         self.path = path
