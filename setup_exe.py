@@ -5,7 +5,7 @@ from logger_default import Logger
 from timerpy import Timer
 from utility.setup_lib import setup_exe
 
-__version__ = '2.0.7'
+__version__ = '2.0.8'
 app_name = 'Cut Videos'
 
 
@@ -18,8 +18,8 @@ def make_exe():
                   app_name=f'{app_name} {__version__}',
                   icon_path=Path('icon.ico'),
                   dir_option=True,
-                  resource_paths=(('.', '.ico'),),
-                  pyinstaller_path=Path("C:\\Python38\\Scripts\\pyinstaller.exe"),
+                  resource_paths=(('.', '.ico'), (".\\resources\\ffmpeg-6.0-full_build\\bin", '.exe'),),
+                  pyinstaller_path=Path("D:\\Python38\\Scripts\\pyinstaller.exe"),
                   )
 
 
