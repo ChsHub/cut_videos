@@ -107,7 +107,7 @@ class TimeInput(Panel):
     def get_value(self):
         digits = list(map(lambda x: x.get_value(), self._digits))
         digits = ''.join(digits)
-        digits = digits[:2] + ':' + digits[2:4] + ':' + digits[4:6] + '.' + digits[7:]
+        digits = digits[:2] + ':' + digits[2:4] + ':' + digits[4:6] + '.' + digits[6:]
         info(f"Digits: {digits}")
         return digits
 

@@ -124,7 +124,7 @@ class Task(Thread):
             directory.mkdir(exist_ok=True)
 
             start_s, start_ms = self.start_time.split('.')
-            info(' '.join(command))
+            info(f'{command}')
             command = [ffmpeg_path,
                        '-sn' if not self.input_framerate else '',  # '-sn' Automatic stream selection
                        ' -r ' + self.input_framerate if self.input_framerate else '',
@@ -144,9 +144,8 @@ class Task(Thread):
                        ]
 
             # Start process
-            with Timer('CONVERT'):
-                self._current_file = file_output
-                self._process = Popen(' '.join(command), shell=False, stdout=PIPE, stderr=STDOUT)
+            self._current_file = file_output
+            self._process = Popen(' '.join(command), shell=False, stdout=PIPE, stderr=STDOUT)
         self._monitor_process(self._process)
         with self._closed_semaphore:
             self._current_file = None

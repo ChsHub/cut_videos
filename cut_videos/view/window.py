@@ -11,7 +11,7 @@ from cut_videos.resources.gui_texts import *
 from cut_videos.resources.paths import file_exts
 from cut_videos.view.progress_bar import ProgressBar
 from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
-
+from send2trash import send2trash
 
 class Window(Frame):
     def __init__(self):
@@ -122,6 +122,8 @@ class Window(Frame):
         elif len(files) == 2:  # Clone from screenshots
             start = findall(r"(\d{6}\.\d{3})", files[0])[-1].replace('.', '')
             end   = findall(r"(\d{6}\.\d{3})", files[1])[-1].replace('.', '')
+            send2trash(files[0])
+            send2trash(files[1])
             start, end = list(sorted((start, end)))
         else:
             error("Too many input files for Time Cloning")
