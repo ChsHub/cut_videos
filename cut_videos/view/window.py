@@ -1,4 +1,5 @@
-from logging import error
+from logging import error, info
+from pathlib import Path
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
@@ -12,6 +13,9 @@ from cut_videos.resources.paths import file_exts
 from cut_videos.view.progress_bar import ProgressBar
 from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
 from send2trash import send2trash
+
+from resources.search_paths import search_paths
+
 
 class Window(Frame):
     def __init__(self):
@@ -28,7 +32,7 @@ class Window(Frame):
 
         self.panel = Panel(self, EXPAND)
         self._sizer = BoxSizer(VERTICAL)
-        file_input = FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
+        self.file_input = FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
                                file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file, )
         # text_color=text_color, font=window_font) TODO
 
@@ -51,7 +55,7 @@ class Window(Frame):
                                      file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file)
 
         # Add inputs to self._sizer
-        self._sizer.Add(file_input, 1, EXPAND)
+        self._sizer.Add(self.file_input, 1, EXPAND)
         self._sizer.Add(self._video_select, 1, EXPAND)
         self._sizer.Add(self._audio_select, 1, EXPAND)
         self._sizer.Add(clone_time_input, 1, EXPAND)
@@ -113,21 +117,36 @@ class Window(Frame):
     def hardsub(self):
         return self._hard_sub_check.GetValue()
 
+    def get_original(self, file):
+        file_name = Path(findall('(.+)_', file)[0]).name
+
+        pattern = f"**/*{file_name[-13:] if len(file_name) >= 13 else file_name}"
+
+        for path in search_paths:
+            found_files = list(Path(path).glob(pattern))
+            if len(found_files) > 0:
+                self.file_input._text_input.SetValue(f"{found_files[0].parent}/{found_files[0].name}")
+                return self._set_file(found_files[0].parent, [found_files[0].name])
+
     def _clone_time(self, path, files):
         if len(files) == 1:  # Clone from video
             data = files[0]
             start, end = findall(r"\[([\d+|\-|\.]+)?_([\d+|\-|\.]+)?\]", data)[-1]
             start = unformat_time(start)
             end = unformat_time(end)
+
         elif len(files) == 2:  # Clone from screenshots
             start = findall(r"(\d{6}\.\d{3})", files[0])[-1].replace('.', '')
-            end   = findall(r"(\d{6}\.\d{3})", files[1])[-1].replace('.', '')
+            end = findall(r"(\d{6}\.\d{3})", files[1])[-1].replace('.', '')
+
             send2trash(files[0])
             send2trash(files[1])
             start, end = list(sorted((start, end)))
+
         else:
-            error("Too many input files for Time Cloning")
+            info("Too many input files for Time Cloning")
             return
+        self.get_original(files[0])
         self._start_input.set_value(start)
         self._end_input.set_value(end)
 

@@ -5,7 +5,7 @@ from logger_default import Logger
 from timerpy import Timer
 from utility.setup_lib import setup_exe
 
-__version__ = '2.0.8'
+__version__ = '2.0.9'
 app_name = 'Cut Videos'
 
 
