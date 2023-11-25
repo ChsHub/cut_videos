@@ -10,11 +10,10 @@ from cut_videos.model.task import Task, unformat_time
 from cut_videos.resources.commands import video_options, audio_options
 from cut_videos.resources.gui_texts import *
 from cut_videos.resources.paths import file_exts
+from cut_videos.resources.search_paths import search_paths
 from cut_videos.view.progress_bar import ProgressBar
 from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
 from send2trash import send2trash
-
-from resources.search_paths import search_paths
 
 
 class Window(Frame):
