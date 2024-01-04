@@ -4,7 +4,7 @@ from wx import ComboBox, CB_DROPDOWN, CB_READONLY, EVT_TEXT, Panel, StaticText, 
     HORIZONTAL, NORMAL, MODERN, TextCtrl, CENTER
 from wxwidgets import SimpleSizer, SimpleButton
 
-from cut_videos.resources.gui_texts import window_font, text_color, h1_font
+from src.resources.gui_texts import window_font, text_color, h1_font
 
 
 class StandardSelection(Panel):

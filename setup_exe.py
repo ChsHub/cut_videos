@@ -18,7 +18,7 @@ def make_exe():
                   app_name=f'{app_name} {__version__}',
                   icon_path=Path('icon.ico'),
                   dir_option=True,
-                  resource_paths=(('.', '.ico'), (".\\resources\\ffmpeg-6.0-full_build\\bin", '.exe'),),
+                  resource_paths=(('.', '.ico'), (".\\src\\resources\\ffmpeg-6.0-full_build\\bin", '.exe'),),
                   pyinstaller_path=Path("C:\\Python\\python-3.11\\Scripts\\pyinstaller.exe"),
                   )
 

@@ -1,5 +1,5 @@
-from cut_videos.resources.gui_texts import *
-from cut_videos.resources.paths import ffprobe_path
+from src.resources.gui_texts import *
+from src.resources.paths import ffprobe_path
 
 video_options = {
     webm_text: ('-filter_complex "scale=<res>" -c:v libvpx-vp9 -speed 1 -crf <crf> -b:v 0 -threads 4 -tile-columns 6 -frame-parallel 1 -auto-alt-ref 1 -lag-in-frames 25', ".webm"),

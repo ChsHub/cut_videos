@@ -6,18 +6,19 @@ from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon
     GA_HORIZONTAL, CheckBox
 from wxwidgets import FileInput, SimpleButton
 
-from cut_videos.model.task import Task, unformat_time
-from cut_videos.resources.commands import video_options, audio_options
-from cut_videos.resources.gui_texts import *
-from cut_videos.resources.paths import file_exts
-from cut_videos.resources.search_paths import search_paths
-from cut_videos.view.progress_bar import ProgressBar
-from cut_videos.view.widgets import StandardSelection, SimpleInput, TimeInput
+from src.model.task import Task, unformat_time
+from src.resources.commands import video_options, audio_options
+from src.resources.gui_texts import *
+from src.resources.paths import file_exts
+from src.resources.search_paths import search_paths
+from src.view.progress_bar import ProgressBar
+from src.view.widgets import StandardSelection, SimpleInput, TimeInput
 from send2trash import send2trash
 
 
 class Window(Frame):
     def __init__(self):
+
         self.files = []
         self.path = None
         self._active_tasks = []

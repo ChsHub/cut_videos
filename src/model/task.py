@@ -11,11 +11,11 @@ from threading import Thread, Semaphore
 from PIL import Image
 from timerpy import Timer
 
-from cut_videos.resources.commands import audio_options, image_types, digits, frame_input_ext, duration_command, \
+from src.resources.commands import audio_options, image_types, digits, frame_input_ext, duration_command, \
     fps_command, audio_codec_command, original_audio, video_options
-from cut_videos.resources.gui_texts import frames_text
-from cut_videos.resources.paths import ffmpeg_path
-from cut_videos.model.time_format import *
+from src.resources.gui_texts import frames_text
+from src.resources.paths import ffmpeg_path
+from src.model.time_format import *
 
 
 class Task(Thread):
