@@ -17,8 +17,8 @@ audio_options = {'opus': '-c:a libopus -vbr on -b:a 100k',
 
 image_types = ('.bmp', '.png', '.jpg', '.webp')
 
-audio_codec_command = f'{ffprobe_path} -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "%s"'
-duration_command = f'{ffprobe_path} -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal "%s"'
-fps_command = f'{ffprobe_path} -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate "%s"'
+audio_codec_command = f'"{ffprobe_path}" -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "%s"'
+duration_command = f'"{ffprobe_path}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal "%s"'
+fps_command = f'"{ffprobe_path}" -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate "%s"'
 frame_input_ext = '.jpg'
 digits = 6

@@ -7,20 +7,19 @@ from re import error
 from subprocess import Popen, PIPE, STDOUT, getoutput
 from tempfile import TemporaryDirectory
 from threading import Thread, Semaphore
-
+from logger_default import Logger
 from PIL import Image
-from timerpy import Timer
 
+from src.model.time_format import *
 from src.resources.commands import audio_options, image_types, digits, frame_input_ext, duration_command, \
     fps_command, audio_codec_command, original_audio, video_options
 from src.resources.gui_texts import frames_text
 from src.resources.paths import ffmpeg_path
-from src.model.time_format import *
 
 
 class Task(Thread):
     """
-    Run convesion command in thread executor
+    Run conversion command in thread executor
     """
 
     def __init__(self, input_framerate: str,
@@ -35,6 +34,7 @@ class Task(Thread):
                  files: list,
                  remove_task: callable,
                  bar):
+
         Thread.__init__(self)
         # GUI
         self._set_total_frames = bar.set_total_frames
@@ -42,7 +42,8 @@ class Task(Thread):
         self._remove_task = remove_task
 
         self.input_framerate = input_framerate
-        self.start_time, self.end_time = list(sorted((start_time, end_time)))
+        self.start_time = start_time
+        self.end_time = end_time
         self.hardsub = hardsub
         self.webm_input = webm_input
         self.scale_input = scale_input
@@ -61,18 +62,22 @@ class Task(Thread):
         Run thread and start conversion
         :return:
         """
-        # Load frames
-        self._convert_frames()
-        self._convert_videos()
+        try:
+            info('Start Run')
+            # Load frames
+            self._convert_frames()
+            self._convert_videos()
 
-        if self._closed:
-            return
-        # Set bar to full
-        self._set_total_frames(10)
-        self._set_current_frame_nr(11)
-        # Open directory when finished
-        startfile(self.path)
-        self._remove_task(self)
+            if self._closed:
+                return
+            # Set bar to full
+            self._set_total_frames(10)
+            self._set_current_frame_nr(11)
+            # Open directory when finished
+            startfile(self.path)
+            self._remove_task(self)
+        except Exception as e:
+            exception(e)
 
     def _convert_frames(self):
         """
@@ -89,11 +94,17 @@ class Task(Thread):
         """
         Convert videos
         """
+        info('Convert videos')
+        files = [x for x in self.files if Path(x).suffix not in image_types]
+        info(f'Convert videos: {files}')
         # Load videos
-        for file_input in [x for x in self.files if Path(x).suffix not in image_types]:
+        for file_input in files:
+            info(f'Convert: {file_input}')
             file_input = Path(self.path, file_input)
+            info(f'Convert File: {file_input}')
             # Convert the video
             self._set_total_frames(self._get_duration(file_input) * self._get_video_fps(file_input))
+            info('Frames set')
             self._run_command(file_input,
                               f'_{file_input.stem}_[{format_time(self.start_time)}_{format_time(self.end_time)}]')
 
@@ -107,6 +118,7 @@ class Task(Thread):
         :param command: Conversion command
         :param file_output: Output file
         """
+        info(f'_run_command {file_input} {file_output}')
         with self._closed_semaphore:
             if self._closed:
                 return
@@ -131,9 +143,10 @@ class Task(Thread):
                        '-ss ' + start_s if self.start_time != zero_time and not self.input_framerate else '',
                        # Seeking on input file_input is faster https://trac.ffmpeg.org/wiki/Seeking
                        f'-i "{file_input}"',
-                       '-ss 0.' + start_ms if self.start_time != zero_time  and not self.input_framerate else '',
+                       '-ss 0.' + start_ms if self.start_time != zero_time and not self.input_framerate else '',
                        '-to ' + str(strptime(self.end_time, time_format) - strptime(start_s + '.0', time_format))
-                       if self.end_time != zero_time and not self.input_framerate else '',  # Cut to end if no input is given
+                       if self.end_time != zero_time and not self.input_framerate else '',
+                       # Cut to end if no input is given
                        audio_options[
                            original_audio if getoutput(
                                audio_codec_command % file_input) == self.audio_selection else self.audio_selection],
@@ -195,6 +208,7 @@ class Task(Thread):
 
     def _get_video_fps(self, file):
         output = getoutput(fps_command % file)
+        info(f'Get FPS {output}')
         if not output:
             return 1  # in case of audio
 
@@ -206,9 +220,9 @@ class Task(Thread):
             elif len(output) == 3:
                 return float(output[0]) / float(output[1].split('\n')[0])
             else:
-                exception(f'GET FPS FAIL {output}')
+                info(f'GET FPS FAIL {output}')
 
-        error(f'UNKNOWN FRAMERATE VALUE {output}')
+        info(f'UNKNOWN FRAMERATE VALUE {output}')
         raise NotImplementedError
 
     def _get_duration(self, file):

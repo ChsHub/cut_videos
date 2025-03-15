@@ -9,4 +9,4 @@ if not ffmpeg_path.exists() or not ffprobe_path.exists():
 
 ffmpeg_path = str(ffmpeg_path)
 ffprobe_path = str(ffprobe_path)
-file_exts = "*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.m2ts;*.gif;*.png;*.jpg;"
+file_exts = "*.mkv;*.mp4;*.mov;*.webm;*.avi;*.bmp;*.wmv;*.m2ts;*.ts;*.gif;*.png;*.jpg;"
