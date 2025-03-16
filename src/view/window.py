@@ -118,6 +118,11 @@ class Window(Frame):
         return self._hard_sub_check.GetValue()
 
     def get_original(self, file):
+        """
+        Search original video file
+        :param file: Screenshot file?
+        :return:
+        """
         file_name = Path(findall('(.+)_', file)[0]).name
 
         pattern = f"**/*{file_name[-13:] if len(file_name) >= 13 else file_name}"
