@@ -1,4 +1,5 @@
 import io
+import json
 import locale
 from logging import info, exception
 from os import startfile
@@ -147,10 +148,7 @@ class Task(Thread):
                        '-to ' + str(strptime(self.end_time, time_format) - strptime(start_s + '.0', time_format))
                        if self.end_time != zero_time and not self.input_framerate else '',
                        # Cut to end if no input is given
-                       audio_options[
-                           original_audio if getoutput(
-                               audio_codec_command % file_input) == self.audio_selection else self.audio_selection],
-                       # Don't convert audio if selected is same as input
+                       self.get_audio_option(file_input),
                        command.replace('<crf>', self.webm_input).replace('<res>', self.scale_input),
                        f'-subtitles="{file_input}"' if self.hardsub else '',
                        f'"{file_output}"'
@@ -162,6 +160,38 @@ class Task(Thread):
         self._monitor_process(self._process)
         with self._closed_semaphore:
             self._current_file = None
+
+    def get_audio_option(self, file_input):
+        """
+        Get the audio command, don't convert if original audio matches selected option
+        :param file_input:
+        :return:
+        """
+        data = getoutput(audio_codec_command % file_input)
+        data = json.loads(data)
+        streams = data.get("streams", [])
+        # Extract codec name and language
+        audio_info = [
+            {
+                "index": stream.get("index"),
+                "codec": stream.get("codec_name"),
+                "language": stream.get("tags", {}).get("language", "unknown")
+            }
+            for stream in streams
+        ]
+
+        # Default is first stream
+        audio_codec = audio_info[0]["codec"]
+        index = 0
+
+        if len(audio_info) > 1:
+            for i, stream in enumerate(audio_info):
+                if stream["language"] == "jpn":
+                    audio_codec = stream["codec"]
+                    index = i
+        selection = original_audio if audio_codec == self.audio_selection else self.audio_selection
+        audio_command = audio_options[selection].replace("<audio>", str(index))
+        return audio_command
 
     def stop(self):
         """

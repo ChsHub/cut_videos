@@ -23,7 +23,7 @@ class Window(Frame):
         self.path = None
         self._active_tasks = []
         # init window
-        Frame.__init__(self, None, ID_ANY, window_title, size=(688, 900))
+        Frame.__init__(self, None, ID_ANY, window_title, size=(1100, 900))
         self.SetBackgroundColour(background_color)
         # ICON
         icon = Icon()
