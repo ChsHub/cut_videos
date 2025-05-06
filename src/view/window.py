@@ -3,18 +3,30 @@ from pathlib import Path
 from re import findall
 
 from wx import Panel, BoxSizer, VERTICAL, Frame, ID_ANY, EXPAND, EVT_CLOSE, Icon, Bitmap, BITMAP_TYPE_ANY, \
-    GA_HORIZONTAL, CheckBox
-from wxwidgets import FileInput, SimpleButton
+    GA_HORIZONTAL, CheckBox, FileDropTarget
+from wxwidgets import SimpleButton
 
 from src.model.task import Task, unformat_time
 from src.resources.commands import video_options, audio_options
 from src.resources.gui_texts import *
 from src.resources.paths import file_exts
 from src.resources.search_paths import search_paths
+from src.view.FileInputModded import FileInputModded
 from src.view.progress_bar import ProgressBar
 from src.view.widgets import StandardSelection, SimpleInput, TimeInput
 from send2trash import send2trash
 
+class FileInputter(FileDropTarget):
+    def __init__(self, fileInput):
+        FileDropTarget.__init__(self)
+        self.fileInput = fileInput
+
+    def OnDropFiles(self, x, y, filenames):
+        file_path = str(Path(filenames[0]).parent)
+        file_names = [Path(path).name for path in filenames]
+        self.fileInput.set_input_files(file_path, file_names)
+
+        return True
 
 class Window(Frame):
     def __init__(self):
@@ -32,8 +44,10 @@ class Window(Frame):
 
         self.panel = Panel(self, EXPAND)
         self._sizer = BoxSizer(VERTICAL)
-        self.file_input = FileInput(self.panel, text_button=file_input_button, callback=self._set_file,
+        self.file_input = FileInputModded(self.panel, text_button=file_input_button, callback=self._set_file,
                                file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file, )
+
+        self.SetDropTarget(FileInputter(self.file_input))
         # text_color=text_color, font=window_font) TODO
 
         # Create Input fields
@@ -51,7 +65,7 @@ class Window(Frame):
                                                title=audio_codec_text, font=window_font)
         self._video_select = StandardSelection(parent=self.panel, options=list(video_options.keys()), callback=None,
                                                title=video_codec_text, font=window_font)
-        clone_time_input = FileInput(self.panel, text_button=clone_time_text, callback=self._clone_time,
+        clone_time_input = FileInputModded(self.panel, text_button=clone_time_text, callback=self._clone_time,
                                      file_type=file_exts, text_title=file_input_title, text_open_file=text_open_file)
 
         # Add inputs to self._sizer
